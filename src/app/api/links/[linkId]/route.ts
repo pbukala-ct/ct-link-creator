@@ -2,17 +2,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiRoot } from '@/lib/commercetools/create.client';
 
-interface RouteParams {
-  params: {
-    linkId: string;
-  };
-}
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: { linkId: string } }
 ) {
   try {
+
+  
+     if (!params.linkId) {
+      return NextResponse.json(
+        { error: 'Link ID is required' },
+        { status: 400 }
+      );
+    }
+
     const resolvedParams = await Promise.resolve(params);
     if (!resolvedParams.linkId) {
       return NextResponse.json(

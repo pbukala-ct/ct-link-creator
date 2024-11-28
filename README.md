@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Commercetools Link Generator
 
-## Getting Started
+A Next.js application that allows business users to generate sharable cart links and QR codes for commercetools projects. The generated links and QR codes can be shared with customers to access pre-configured carts with specific products, shipping methods, and customer details.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Cart Configuration**
+  - Select products from the commercetools catalog
+  - Choose shipping method
+  - Set currency (automatically sets appropriate country)
+  - Assign customer from existing customers list
+  
+- **Link Generation**
+  - Creates a unique cart in commercetools
+  - Generates a shareable link
+  - Creates and stores QR code in Google Cloud Storage
+  - Provides both cart view and direct checkout options
+
+- **Cart Display**
+  - Modern, responsive cart view
+  - Shows selected products with quantities and prices
+  - Displays shipping information and tax details
+  - Shows customer information when assigned
+  - Includes QR code for easy sharing
+
+## Tech Stack
+
+- **Frontend**
+  - Next.js 13+ with App Router
+  - TypeScript
+  - Tailwind CSS
+  - shadcn/ui components
+  - QR Code generation using `qrcode`
+
+- **Backend**
+  - Next.js API Routes
+  - Commercetools SDK
+  - Google Cloud Storage for QR code storage
+
+- **Integrations**
+  - Commercetools Platform API
+  - Google Cloud Platform (Storage)
+
+## Prerequisites
+
+- Node.js >= 18.18.0
+- Commercetools project with:
+  - API client credentials
+  - Custom type for cart links
+- Google Cloud Platform project with:
+  - Storage bucket
+  - Service account with appropriate permissions
+
+## Environment Variables
+
+Create a `.env.local` file with:
+
+```env
+# Commercetools Configuration
+CTP_PROJECT_KEY=your-project-key
+CTP_CLIENT_ID=your-client-id
+CTP_CLIENT_SECRET=your-client-secret
+CTP_API_URL=https://api.[region].commercetools.com
+CTP_AUTH_URL=https://auth.[region].commercetools.com
+CTP_SCOPE=manage_project:your-project-key
+
+# Google Cloud Configuration
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_CLIENT_EMAIL=your-service-account-email
+GOOGLE_CLOUD_PRIVATE_KEY=your-private-key
+GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
+
+# Application Configuration
+NEXT_PUBLIC_API_URL=http://localhost:3000 # Or your production URL
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
+```bash
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Create required custom type in commercetools:
+```json
+{
+  "key": "link-cart-type",
+  "name": {
+    "en": "Link Cart Type"
+  },
+  "description": {
+    "en": "Type for storing link information on carts"
+  },
+  "resourceTypeIds": ["cart"],
+  "fieldDefinitions": [
+    {
+      "name": "linkId",
+      "type": { "name": "String" },
+      "required": true,
+      "label": { "en": "Link ID" }
+    },
+    {
+      "name": "createdAt",
+      "type": { "name": "DateTime" },
+      "required": true,
+      "label": { "en": "Created At" }
+    },
+    {
+      "name": "qrCodeUrl",
+      "type": { "name": "String" },
+      "required": false,
+      "label": { "en": "QR Code URL" }
+    }
+  ]
+}
+```
 
-## Learn More
+3. Configure Google Cloud Storage:
+   - Create a bucket
+   - Set up CORS configuration
+   - Configure public access
+   - Create service account with necessary permissions
 
-To learn more about Next.js, take a look at the following resources:
+4. Run the development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Access the application and log in
+2. Select products from the dropdown
+3. Choose currency and shipping method
+4. Select a customer (optional)
+5. Generate the link
+6. Use the generated link or QR code to share the cart
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The application can be deployed to any platform that supports Next.js applications. For Netlify deployment:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Configure environment variables in Netlify dashboard
+2. Set the correct `NEXT_PUBLIC_BASE_URL` for production
+3. Deploy using the Netlify CLI or GitHub integration
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details

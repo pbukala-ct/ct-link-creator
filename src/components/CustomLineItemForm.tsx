@@ -28,7 +28,7 @@ export function CustomLineItemForm({ currency, onAdd }: CustomLineItemFormProps)
 
   return (
     <Card className="border border-[#191741]">
-      <CardHeader className="border-b border-[#191741] bg-[#C6C2BC]">
+      <CardHeader className="border-b border-[#191741] bg-[#8F8FFF]">
         <CardTitle className="text-xl text-[#191741]">Add Custom Item</CardTitle>
       </CardHeader>
       <CardContent className="bg-[#FBF9F5]">

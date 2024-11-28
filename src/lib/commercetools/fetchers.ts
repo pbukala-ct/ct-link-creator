@@ -7,6 +7,28 @@ export interface SimplifiedProduct {
   id: string;
   name: string;
   key?: string;
+  variant?: {
+    images?: Array<{
+      url: string;
+    }>;
+  };
+}
+export interface Address {
+  streetName: string;
+  streetNumber?: string;
+  city: string;
+  state?: string;
+  country: string;
+  postalCode: string;
+}
+
+export interface SimplifiedAddress {
+  streetName: string;
+  streetNumber?: string;
+  city: string;
+  state?: string;
+  country: string;
+  postalCode: string;
 }
 
 export interface SimplifiedCustomer {
@@ -14,14 +36,15 @@ export interface SimplifiedCustomer {
   email: string;
   firstName?: string;
   lastName?: string;
+  defaultShippingAddress?: SimplifiedAddress;
 }
+
 
 export interface SimplifiedShippingMethod {
   id: string;
   name: string;
   description?: string;
 }
-
 export const fetchCustomers = async (): Promise<SimplifiedCustomer[]> => {
   try {
     const response = await createApiRoot()
@@ -34,17 +57,43 @@ export const fetchCustomers = async (): Promise<SimplifiedCustomer[]> => {
       })
       .execute();
 
-    return response.body.results.map((customer: Customer) => ({
-      id: customer.id,
-      email: customer.email,
-      firstName: customer.firstName,
-      lastName: customer.lastName
-    }));
+    return response.body.results.map((customer: Customer) => {
+      // Find default shipping address if it exists
+      const defaultShippingAddress = customer.defaultShippingAddressId
+        ? customer.addresses.find(address => address.id === customer.defaultShippingAddressId)
+        : undefined;
+
+      // Only include address if all required fields are present
+      let mappedAddress: SimplifiedAddress | undefined = undefined;
+      
+      if (defaultShippingAddress?.streetName && 
+          defaultShippingAddress?.city && 
+          defaultShippingAddress?.country && 
+          defaultShippingAddress?.postalCode) {
+        mappedAddress = {
+          streetName: defaultShippingAddress.streetName,
+          streetNumber: defaultShippingAddress.streetNumber,
+          city: defaultShippingAddress.city,
+          state: defaultShippingAddress.state,
+          country: defaultShippingAddress.country,
+          postalCode: defaultShippingAddress.postalCode
+        };
+      }
+
+      return {
+        id: customer.id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        defaultShippingAddress: mappedAddress
+      };
+    });
   } catch (error) {
     console.error('Error fetching customers:', error);
     throw error;
   }
 };
+
 
 export const fetchProducts = async (): Promise<SimplifiedProduct[]> => {
   try {
@@ -58,10 +107,16 @@ export const fetchProducts = async (): Promise<SimplifiedProduct[]> => {
       })
       .execute();
 
+      console.log('Product response:', JSON.stringify(response.body.results[0], null, 2));
+
+
     return response.body.results.map((product: ProductProjection) => ({
       id: product.id,
       name: product.name.en || Object.values(product.name)[0], // fallback to first available language
-      key: product.key
+      key: product.key,
+      variant: {
+        images: product.masterVariant.images  
+      }
     }));
   } catch (error) {
     console.error('Error fetching products:', error);

@@ -12,6 +12,8 @@ import type { SimplifiedCustomer } from '@/lib/commercetools/fetchers';
 import { CartProduct, CustomLineItem } from '../types/commercetools';
 import { CartPreview } from './CartPreview';
 import { CustomLineItemForm } from './CustomLineItemForm';
+import { AddressDisplay } from './AddressDisplay';
+import { SearchableCombobox } from './SearchableCombobox';
 
 
 interface FormData {
@@ -32,6 +34,8 @@ export const LinkCreator: React.FC = () => {
   const [error, setError] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [customers, setCustomers] = useState<SimplifiedCustomer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<SimplifiedCustomer | null>(null);
+
   
   const [formData, setFormData] = useState<FormData>({
     selectedProducts: [],
@@ -85,9 +89,18 @@ export const LinkCreator: React.FC = () => {
     loadInitialData();
   }, []);
 
+  // Update the customer selection handler
+const handleCustomerChange = (customerId: string) => {
+  const customer = customers.find(c => c.id === customerId);
+  setSelectedCustomer(customer || null);
+  setFormData({...formData, customerId});
+};
+
 // Handle product selection
 const handleAddProduct = (productId: string) => {
   const product = products.find(p => p.id === productId);
+  console.log('Selected product:', product); // Debug log
+
   if (product) {
     const existingProduct = formData.selectedProducts.find(p => p.id === productId);
     if (existingProduct) {
@@ -98,15 +111,22 @@ const handleAddProduct = (productId: string) => {
         )
       });
     } else {
+      const newProduct = { 
+        id: productId, 
+        quantity: 1,
+        name: product.name,
+        variant: {
+          images: product.variant?.images
+        }
+      };
+      console.log('Adding new product:', newProduct); // Debug log
+      
       setFormData({
         ...formData,
-        selectedProducts: [...formData.selectedProducts, { 
-          id: productId, 
-          quantity: 1,
-          name: product.name
-        }]
+        selectedProducts: [...formData.selectedProducts, newProduct]
       });
     }
+    console.log('Updated formData:', formData); // Debug log
   }
 };
 
@@ -190,6 +210,13 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
     }
   };
 
+  // Update the form validation
+const isFormValid = 
+formData.currency && 
+formData.shippingMethod && 
+(formData.selectedProducts.length > 0 || formData.customLineItems.length > 0) &&
+(selectedCustomer?.defaultShippingAddress !== undefined);
+
   if (loading && !products.length) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -204,35 +231,40 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
       {/* Main Form */}
       <div className="md:col-span-2">   
       <Card className="w-full max-w-2xl mx-auto border border-[#191741] bg-white">
-  <CardHeader className="bg-[#C6C2BC] border-b border-[#191741]">
+  <CardHeader className="bg-[#8F8FFF] border-b border-[#191741]">
     <CardTitle className="text-2xl font-bold text-[#191741]">Cart Link Creator</CardTitle>
   </CardHeader>
   <CardContent className="bg-[#FBF9F5]">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#191741]">Customer</label>
-                <Select
-                  value={formData.customerId}
-                  onValueChange={(value) => setFormData({...formData, customerId: value})}
-                >
-                  <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741]">
-                    <SelectValue placeholder="Select customer" className="text-[#191741]" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
-                    {customers.map((customer) => (
-                      <SelectItem 
-                        key={customer.id} 
-                        value={customer.id}
-                        className="hover:bg-white cursor-pointer py-2 text-[#191741]"
-                      >
-                        {customer.firstName && customer.lastName 
-                          ? `${customer.firstName} ${customer.lastName} (${customer.email})`
-                          : customer.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+  <label className="text-sm font-medium text-[#191741]">Customer</label>
+  <Select
+    value={formData.customerId}
+    onValueChange={handleCustomerChange}
+  >
+    <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741] border-[#191741]">
+      <SelectValue placeholder="Select customer" />
+    </SelectTrigger>
+    <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
+      {customers.map((customer) => (
+        <SelectItem 
+          key={customer.id} 
+          value={customer.id}
+          className="hover:bg-white cursor-pointer py-2 text-[#191741]"
+        >
+          {customer.firstName && customer.lastName 
+            ? `${customer.firstName} ${customer.lastName} (${customer.email})`
+            : customer.email}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  
+  {/* Add address display */}
+  {selectedCustomer && (
+    <AddressDisplay address={selectedCustomer.defaultShippingAddress} />
+  )}
+</div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[#191741]">Currency</label>
@@ -260,22 +292,10 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
               {/* Product Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[#191741]">Add Product</label>
-                <Select onValueChange={handleAddProduct}>
-                  <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741]">
-                    <SelectValue placeholder="Select a product" className="text-[#191741]" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
-                    {products.map((product) => (
-                      <SelectItem 
-                        key={product.id} 
-                        value={product.id}
-                        className="hover:bg-white cursor-pointer py-2 text-[#191741]"
-                      >
-                        {product.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableCombobox 
+                  products={products} 
+                  onSelect={handleAddProduct}
+                />
               </div>
 
               <div className="space-y-2">
@@ -356,20 +376,21 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-[#6359ff] text-white py-6 text-lg font-semibold hover:bg-[#191741] transition-colors"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Generating Link...
-                  </>
-                ) : (
-                  'Generate Link'
-                )}
-              </Button>
+      <Button 
+            type="submit" 
+            disabled={loading || !isFormValid}
+            className="w-full bg-[#6359ff] text-white py-6 text-lg font-semibold hover:bg-[#191741] transition-colors disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                Generating Link...
+              </>
+            ) : (
+              'Generate Link'
+            )}
+      </Button>
+
             </form>
           </CardContent>
         </Card>

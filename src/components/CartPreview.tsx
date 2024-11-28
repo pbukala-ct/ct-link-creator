@@ -1,7 +1,7 @@
 // src/components/CartPreview.tsx
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Package, Trash2 } from 'lucide-react';
 import { CartProduct, CustomLineItem } from '../types/commercetools';
 
 interface CartPreviewProps {
@@ -32,7 +32,7 @@ export function CartPreview({
 
   return (
     <Card className="w-full border border-[#191741]">
-      <CardHeader className="border-b border-[#191741] bg-[#C6C2BC]">
+      <CardHeader className="border-b border-[#191741] bg-[#8F8FFF]">
         <CardTitle className="text-xl text-[#191741]">Cart Preview</CardTitle>
       </CardHeader>
       <CardContent className="bg-[#FBF9F5] mb-4">
@@ -41,30 +41,45 @@ export function CartPreview({
         <div className="space-y-6"></div>
           {/* Products */}
           {products.map((product) => (
-            <div key={product.id} className="flex items-center justify-between p-2 bg-[#C2C2FF] rounded-lg border border-[#191741]">
-              <div className="flex-1">
-                <p className="font-medium text-[#191741]">{product.name}</p>
-                <div className="flex items-center mt-1">
-                  <label className="text-sm text-[#191741] mr-2">Qty:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={product.quantity}
-                    onChange={(e) => onUpdateQuantity(product.id, parseInt(e.target.value))}
-                    className="w-16 px-2 py-1 border border-[#191741] rounded bg-white text-[#191741]"
-                  />
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRemoveProduct(product.id)}
-                className="text-[#6359ff] hover:text-[#191741] hover:bg-[#F7F2EA]"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+  <div key={product.id} className="flex items-center justify-between p-2 bg-[#F7F2EA] rounded-lg border border-[#191741]">
+    {/* Add Image/Placeholder Container */}
+    <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-white border border-[#191741] mr-4">
+      {product.variant?.images?.[0]?.url ? (
+        <img 
+          src={product.variant.images[0].url} 
+          alt={product.name}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Package className="h-8 w-8 text-[#191741]" />
+        </div>
+      )}
+    </div>
+
+    <div className="flex-1">
+      <p className="font-medium text-[#191741]">{product.name}</p>
+      <div className="flex items-center mt-1">
+        <label className="text-sm text-[#191741] mr-2">Qty:</label>
+        <input
+          type="number"
+          min="1"
+          value={product.quantity}
+          onChange={(e) => onUpdateQuantity(product.id, parseInt(e.target.value))}
+          className="w-16 px-2 py-1 border border-[#191741] rounded bg-white text-[#191741]"
+        />
+      </div>
+    </div>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => onRemoveProduct(product.id)}
+      className="text-[#6359ff] hover:text-[#191741] hover:bg-[#F7F2EA]"
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  </div>
+))}
           {/* Custom Line Items */}
           {customLineItems.map((item, index) => (
             <div key={index} className="flex items-center justify-between p-2 bg-[#FFE9A1] rounded-lg border border-[#191741]">

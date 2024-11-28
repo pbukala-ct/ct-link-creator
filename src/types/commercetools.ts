@@ -1,7 +1,12 @@
 export interface CartProduct {
   id: string;
+  name: string;
   quantity: number;
-  name?: string; // For display purposes
+  variant?: {
+    images?: Array<{
+      url: string;
+    }>;
+  };
 }
 
 export interface CustomLineItem {

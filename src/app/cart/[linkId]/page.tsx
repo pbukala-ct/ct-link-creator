@@ -36,7 +36,7 @@ export default async function CartPage({
         </div>
       </div>
     }>
-      <CartDisplay cart={cart as CartData} />
+      <CartDisplay cart={cart as unknown as CartData} />
     </Suspense>
   );
 }async function getCartData(linkId: string) {

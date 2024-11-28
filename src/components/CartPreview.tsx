@@ -32,7 +32,7 @@ export function CartPreview({
 
   return (
     <Card className="w-full border border-[#191741]">
-      <CardHeader className="border-b border-[#191741] bg-[#F7F2EA]">
+      <CardHeader className="border-b border-[#191741] bg-[#C6C2BC]">
         <CardTitle className="text-xl text-[#191741]">Cart Preview</CardTitle>
       </CardHeader>
       <CardContent className="bg-[#FBF9F5] mb-4">
@@ -41,7 +41,7 @@ export function CartPreview({
         <div className="space-y-6"></div>
           {/* Products */}
           {products.map((product) => (
-            <div key={product.id} className="flex items-center justify-between p-2 bg-[#F7F2EA] rounded-lg border border-[#191741]">
+            <div key={product.id} className="flex items-center justify-between p-2 bg-[#C2C2FF] rounded-lg border border-[#191741]">
               <div className="flex-1">
                 <p className="font-medium text-[#191741]">{product.name}</p>
                 <div className="flex items-center mt-1">
@@ -57,7 +57,7 @@ export function CartPreview({
               </div>
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={() => onRemoveProduct(product.id)}
                 className="text-[#6359ff] hover:text-[#191741] hover:bg-[#F7F2EA]"
               >
@@ -65,10 +65,9 @@ export function CartPreview({
               </Button>
             </div>
           ))}
-
           {/* Custom Line Items */}
           {customLineItems.map((item, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-[#FBF9F5] rounded-lg border border-[#191741]">
+            <div key={index} className="flex items-center justify-between p-2 bg-[#FFE9A1] rounded-lg border border-[#191741]">
                <div className="flex-1">
                 <p className="font-medium text-gray-800">{item.name}</p>
                 <p className="text-sm text-gray-600">{formatPrice(item.price)}</p>
@@ -85,7 +84,7 @@ export function CartPreview({
               </div>
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={() => onRemoveCustomItem(index)}
                 className="text-[#6359ff] hover:text-[#191741] hover:bg-[#F7F2EA]"
               >

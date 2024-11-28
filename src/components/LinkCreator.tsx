@@ -204,7 +204,7 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
       {/* Main Form */}
       <div className="md:col-span-2">   
       <Card className="w-full max-w-2xl mx-auto border border-[#191741] bg-white">
-  <CardHeader className="bg-[#F7F2EA] border-b border-[#191741]">
+  <CardHeader className="bg-[#C6C2BC] border-b border-[#191741]">
     <CardTitle className="text-2xl font-bold text-[#191741]">Cart Link Creator</CardTitle>
   </CardHeader>
   <CardContent className="bg-[#FBF9F5]">

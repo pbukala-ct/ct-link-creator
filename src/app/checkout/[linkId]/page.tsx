@@ -2,13 +2,14 @@
 import { createApiRoot } from '@/lib/commercetools/create.client';
 import { CheckoutDisplay } from '@/components/CheckoutDisplay';
 import { Suspense } from 'react';
+import { CartData } from '@/types/commercetools';
 
 export default async function CheckoutPage({ 
   params 
 }: { 
-  params: { linkId: string } 
+  params: Promise<{ linkId: string }> 
 }) {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   
   try {
     const response = await createApiRoot()
@@ -20,6 +21,8 @@ export default async function CheckoutPage({
         }
       })
       .execute();
+
+      const cart = response.body.results[0];
 
     if (!response.body.results.length) {
       return (
@@ -40,7 +43,8 @@ export default async function CheckoutPage({
           </div>
         </div>
       }>
-        <CheckoutDisplay cart={response.body.results[0]} />
+        {/* @ts-expect-error Server Component */}
+        <CheckoutDisplay cart={cart as CartData} />
       </Suspense>
     );
   } catch (error) {

@@ -40,6 +40,7 @@
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",

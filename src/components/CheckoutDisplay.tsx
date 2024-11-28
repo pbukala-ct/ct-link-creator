@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { checkoutFlow } from '@commercetools/checkout-browser-sdk';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { CartData } from '@/types/commercetools';
 
 interface CheckoutDisplayProps {
-  cart: any;
+  cart: CartData;
 }
 
 export function CheckoutDisplay({ cart }: CheckoutDisplayProps) {
@@ -41,7 +42,7 @@ export function CheckoutDisplay({ cart }: CheckoutDisplayProps) {
           logInfo: true,
           logWarn: true,
           logError: true,
-          container: '#checkout-container'
+          // container: '#checkout-container'
         });
 
         setIsLoading(false);

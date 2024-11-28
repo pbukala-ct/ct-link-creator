@@ -2,37 +2,20 @@
 import { createApiRoot } from '@/lib/commercetools/create.client';
 import { CartDisplay } from '@/components/CartDisplay';
 import { Suspense } from 'react';
-
+import { CartData } from '@/types/commercetools';
+import { log } from 'console';
 
 interface PageProps {
-  params: Promise<{ linkId: string }> | { linkId: string };
+  params: { linkId: string };
 }
 
-// Create a separate async function for data fetching
-async function getCartData(linkId: string) {
-  try {
-    const response = await createApiRoot()
-      .carts()
-      .get({
-        queryArgs: {
-          where: `custom(fields(linkId="${linkId}"))`,
-          limit: 1
-        }
-      })
-      .execute();
-
-      console.log('Cart Data:', JSON.stringify(response.body.results[0].shippingInfo));
-    return response.body.results[0] || null;
-  } catch (error) {
-    console.error('Error fetching cart:', error);
-    return null;
-  }
-}
-
-export default async function CartPage({ params }: PageProps) {
-  // Await the params object
-  const resolvedParams = await Promise.resolve(params);
-  const cart = await getCartData(resolvedParams.linkId);
+export default async function CartPage({
+  params,
+}: {
+  params: Promise<{ linkId: any }>
+}) {
+  const linkId  = (await params).linkId;
+  const cart = await getCartData(linkId);
 
   if (!cart) {
     return (
@@ -53,12 +36,33 @@ export default async function CartPage({ params }: PageProps) {
         </div>
       </div>
     }>
-      <CartDisplay cart={cart} />
+      <CartDisplay cart={cart as CartData} />
     </Suspense>
   );
+}async function getCartData(linkId: string) {
+  try {
+    const response = await createApiRoot()
+      .carts()
+      .get({
+        queryArgs: {
+          where: `custom(fields(linkId="${linkId}"))`,
+          limit: 1
+        }
+      })
+      .execute();
+
+    if (!response.body.results.length) {
+      return null;
+    }
+
+    return response.body.results[0];
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    return null;
+  }
 }
 
 // Generate static params for static optimization
-export async function generateStaticParams() {
+export const generateStaticParams = async () => {
   return [];
-}
+};

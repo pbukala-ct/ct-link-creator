@@ -4,122 +4,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { CreditCard, MapPin, Package, Calendar, Share2, QrCode } from 'lucide-react';
 import { User, Truck } from 'lucide-react';
-import { QRCode } from 'qrcode.react';
+import { CartData } from '@/types/commercetools';
 
-interface Money {
-  type: string;
-  currencyCode: string;
-  centAmount: number;
-  fractionDigits: number;
-}
 
-interface ShippingRate {
-  price: Money;
-  freeAbove?: Money;
-  tiers: any[];
-}
-
-interface TaxRate {
-  name: string;
-  amount: number;
-  includedInPrice: boolean;
-  country: string;
-  state: string;
-  id: string;
-  key: string;
-  subRates: any[];
-}
-
-interface TaxedPrice {
-  totalNet: Money;
-  totalGross: Money;
-  totalTax: Money;
-  taxPortions: Array<{
-    rate: number;
-    amount: Money;
-    name: string;
-  }>;
-}
-
-interface ShippingInfo {
-  shippingMethodName: string;
-  price: Money;
-  shippingRate: ShippingRate;
-  taxRate: TaxRate;
-  taxCategory: {
-    typeId: string;
-    id: string;
-  };
-  deliveries: any[];
-  shippingMethod: {
-    typeId: string;
-    id: string;
-  };
-  taxedPrice: TaxedPrice;
-  shippingMethodState: string;
-}
-
-interface CartData {
-    id: string;
-    version: number;
-    createdAt: string;
-    lastModifiedAt: string;
-    customerId?: string;
-    customer?: {
-      id: string;
-      email: string;
-      firstName?: string;
-      lastName?: string;
-    };
-    shippingInfo: ShippingInfo;
-    lineItems: Array<{
-      id: string;
-      name: { [key: string]: string };
-      quantity: number;
-      
-      price: {
-        value: {
-          centAmount: number;
-          currencyCode: string;
-        };
-      };
-      totalPrice: {
-        centAmount: number;
-        currencyCode: string;
-      };
-      variant: {
-        images?: Array<{
-          url: string;
-        }>;
-      };
-    }>;
-    totalPrice: {
-      centAmount: number;
-      currencyCode: string;
-    };
-    country: string;
-    shippingAddress: {
-      firstName: string;
-      lastName: string;
-      streetName: string;
-      streetNumber: string;
-      city: string;
-      postalCode: string;
-      country: string;
-      state?: string;
-    };
-    custom?: {
-      type: {
-        key: string;
-      };
-      fields: {
-        linkId: string;
-        createdAt: string;
-        qrCodeUrl: string;
-      };
-    };
-  }
-  
   interface CartDisplayProps {
     cart: CartData;
   }
@@ -360,7 +247,6 @@ interface CartData {
                   </CardContent>
                 </Card>
 
-                /* In the CartDisplay component, add this to the sidebar section */}
           {cart.custom?.fields?.qrCodeUrl && (
             <Card className="shadow-lg">
               <CardHeader className="border-b bg-gray-50">

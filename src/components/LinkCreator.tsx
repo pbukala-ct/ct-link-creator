@@ -9,10 +9,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchProducts, fetchCurrencies, fetchShippingMethods, fetchCustomers } from '@/lib/commercetools/fetchers';
 import type { SimplifiedProduct, SimplifiedShippingMethod } from '@/lib/commercetools/fetchers';
 import type { SimplifiedCustomer } from '@/lib/commercetools/fetchers';
+import { CartProduct, CustomLineItem } from '../types/commercetools';
+import { CartPreview } from './CartPreview';
+import { CustomLineItemForm } from './CustomLineItemForm';
 
 
 interface FormData {
-  selectedProducts: string[];
+  selectedProducts: CartProduct[];
+  customLineItems: CustomLineItem[];
   currency: string;
   shippingMethod: string;
   customerId: string;
@@ -31,6 +35,7 @@ export const LinkCreator: React.FC = () => {
   
   const [formData, setFormData] = useState<FormData>({
     selectedProducts: [],
+    customLineItems: [],
     currency: '',
     shippingMethod: '',
     customerId: ''
@@ -80,6 +85,75 @@ export const LinkCreator: React.FC = () => {
     loadInitialData();
   }, []);
 
+// Handle product selection
+const handleAddProduct = (productId: string) => {
+  const product = products.find(p => p.id === productId);
+  if (product) {
+    const existingProduct = formData.selectedProducts.find(p => p.id === productId);
+    if (existingProduct) {
+      setFormData({
+        ...formData,
+        selectedProducts: formData.selectedProducts.map(p =>
+          p.id === productId ? { ...p, quantity: p.quantity + 1 } : p
+        )
+      });
+    } else {
+      setFormData({
+        ...formData,
+        selectedProducts: [...formData.selectedProducts, { 
+          id: productId, 
+          quantity: 1,
+          name: product.name
+        }]
+      });
+    }
+  }
+};
+
+
+// Handle custom line item addition
+const handleAddCustomItem = (item: CustomLineItem) => {
+  setFormData({
+    ...formData,
+    customLineItems: [...formData.customLineItems, item]
+  });
+};
+
+// Cart modification handlers
+const handleRemoveProduct = (id: string) => {
+  setFormData({
+    ...formData,
+    selectedProducts: formData.selectedProducts.filter(p => p.id !== id)
+  });
+};
+
+const handleRemoveCustomItem = (index: number) => {
+  setFormData({
+    ...formData,
+    customLineItems: formData.customLineItems.filter((_, i) => i !== index)
+  });
+};
+
+const handleUpdateQuantity = (id: string, quantity: number) => {
+  if (quantity < 1) return;
+  setFormData({
+    ...formData,
+    selectedProducts: formData.selectedProducts.map(p =>
+      p.id === id ? { ...p, quantity } : p
+    )
+  });
+};
+
+const handleUpdateCustomQuantity = (index: number, quantity: number) => {
+  if (quantity < 1) return;
+  setFormData({
+    ...formData,
+    customLineItems: formData.customLineItems.map((item, i) =>
+      i === index ? { ...item, quantity } : item
+    )
+  });
+};
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -91,15 +165,7 @@ export const LinkCreator: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          products: formData.selectedProducts.map(productId => ({
-            id: productId,
-            quantity: 1
-          })),
-          currency: formData.currency,
-          shippingMethod: formData.shippingMethod,
-          customerId: formData.customerId
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -134,178 +200,202 @@ export const LinkCreator: React.FC = () => {
 
 
   return (
-<Card className="w-full max-w-2xl mx-auto">
-  <CardHeader>
-    <CardTitle className="text-2xl font-bold text-gray-400">Cart Link Creator</CardTitle>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Main Form */}
+      <div className="md:col-span-2">   
+      <Card className="w-full max-w-2xl mx-auto border border-[#191741] bg-white">
+  <CardHeader className="bg-[#F7F2EA] border-b border-[#191741]">
+    <CardTitle className="text-2xl font-bold text-[#191741]">Cart Link Creator</CardTitle>
   </CardHeader>
-  <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+  <CardContent className="bg-[#FBF9F5]">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191741]">Customer</label>
+                <Select
+                  value={formData.customerId}
+                  onValueChange={(value) => setFormData({...formData, customerId: value})}
+                >
+                  <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741]">
+                    <SelectValue placeholder="Select customer" className="text-[#191741]" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
+                    {customers.map((customer) => (
+                      <SelectItem 
+                        key={customer.id} 
+                        value={customer.id}
+                        className="hover:bg-white cursor-pointer py-2 text-[#191741]"
+                      >
+                        {customer.firstName && customer.lastName 
+                          ? `${customer.firstName} ${customer.lastName} (${customer.email})`
+                          : customer.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <div className="space-y-2">
-        <label className="text-sm font-medium">Customer</label>
-        <Select
-          value={formData.customerId}
-          onValueChange={(value) => setFormData({...formData, customerId: value})}
-        >
-          <SelectTrigger className="w-full bg-white text-black">
-            <SelectValue placeholder="Select customer" className="text-black" />
-          </SelectTrigger>
-          <SelectContent className="bg-white border shadow-md">
-            {customers.map((customer) => (
-              <SelectItem 
-                key={customer.id} 
-                value={customer.id}
-                className="hover:bg-gray-100 cursor-pointer py-2 text-black"
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191741]">Currency</label>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => setFormData({...formData, currency: value})}
+                >
+                  <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741]">
+                    <SelectValue placeholder="Select currency" className="text-[#191741]" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
+                    {currencies.map((currency) => (
+                      <SelectItem 
+                        key={currency} 
+                        value={currency}
+                        className="hover:bg-white cursor-pointer py-2 text-[#191741]"
+                      >
+                        {currency}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Product Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191741]">Add Product</label>
+                <Select onValueChange={handleAddProduct}>
+                  <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741]">
+                    <SelectValue placeholder="Select a product" className="text-[#191741]" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
+                    {products.map((product) => (
+                      <SelectItem 
+                        key={product.id} 
+                        value={product.id}
+                        className="hover:bg-white cursor-pointer py-2 text-[#191741]"
+                      >
+                        {product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191741]">Shipping Method</label>
+                <Select
+                  value={formData.shippingMethod}
+                  onValueChange={(value) => setFormData({...formData, shippingMethod: value})}
+                >
+                  <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741]">
+                    <SelectValue placeholder="Select shipping method" className="text-[#191741]" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
+                    {shippingMethods.map((method) => (
+                      <SelectItem 
+                        key={method.id} 
+                        value={method.id}
+                        className="hover:bg-white cursor-pointer py-2 text-[#191741]"
+                      >
+                        {method.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {linkId && (
+                <div className="p-6 bg-[#F7F2EA] rounded-lg border border-[#191741] shadow-sm">
+                  <p className="font-semibold text-[#191741] mb-3">Generated Link:</p>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <Input 
+                        value={generateCheckoutUrl(linkId)} 
+                        readOnly 
+                        className="bg-white text-[#191741] border-[#191741] text-sm mb-3"
+                      />
+                      <div className="flex gap-3">
+                        <Button
+                          type="button"
+                          onClick={() => window.open(generateCartUrl(linkId), '_blank')}
+                          className="bg-[#6359ff] text-white font-semibold px-8 py-3 text-lg whitespace-nowrap hover:bg-[#191741] transition-colors"
+                        >
+                          View Cart →
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => window.open(generateCheckoutUrl(linkId), '_blank')}
+                          className="bg-[#0bbfbf] text-white font-semibold px-8 py-3 text-lg whitespace-nowrap hover:bg-[#191741] transition-colors"
+                        >
+                          Checkout →
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-lg border border-[#191741]">
+                      {qrCodeUrl ? (
+                        <>
+                          <img 
+                            src={qrCodeUrl} 
+                            alt="Checkout QR Code" 
+                            className="w-32 h-32"
+                            onError={(e) => console.log('Image load error:', e)}
+                            onLoad={() => console.log('Image loaded successfully')}
+                          />
+                          <span className="text-sm text-[#191741]">Scan to Checkout</span>
+                        </>
+                      ) : (
+                        <span className="text-sm text-[#191741]">QR Code not available</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-[#6359ff] text-white py-6 text-lg font-semibold hover:bg-[#191741] transition-colors"
               >
-                {customer.firstName && customer.lastName 
-                  ? `${customer.firstName} ${customer.lastName} (${customer.email})`
-                  : customer.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    Generating Link...
+                  </>
+                ) : (
+                  'Generate Link'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Products</label>
-            <Select
-              value={formData.selectedProducts[0]}
-              onValueChange={(value) => setFormData({...formData, selectedProducts: [value]})}
-            >
-              <SelectTrigger className="w-full bg-white text-black">
-                <SelectValue placeholder="Select a product" className="text-black" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
-                {products.map((product) => (
-                  <SelectItem 
-                    key={product.id} 
-                    value={product.id}
-                    className="hover:bg-gray-100 cursor-pointer py-2 text-black"
-                  >
-                    {product.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Currency</label>
-            <Select
-              value={formData.currency}
-              onValueChange={(value) => setFormData({...formData, currency: value})}
-            >
-              <SelectTrigger className="w-full bg-white text-black">
-                <SelectValue placeholder="Select currency" className="text-black" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
-                {currencies.map((currency) => (
-                  <SelectItem 
-                    key={currency} 
-                    value={currency}
-                    className="hover:bg-gray-100 cursor-pointer py-2 text-black"
-                  >
-                    {currency}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Shipping Method</label>
-            <Select
-              value={formData.shippingMethod}
-              onValueChange={(value) => setFormData({...formData, shippingMethod: value})}
-            >
-              <SelectTrigger className="w-full bg-white text-black">
-                <SelectValue placeholder="Select shipping method" className="text-black" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
-                {shippingMethods.map((method) => (
-                  <SelectItem 
-                    key={method.id} 
-                    value={method.id}
-                    className="hover:bg-gray-100 cursor-pointer py-2 text-black"
-                  >
-                    {method.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-{linkId && (
-  <div className="p-6 bg-gray-100 rounded-lg border border-gray-200 shadow-sm">
-    <p className="font-semibold text-gray-900 mb-3">Generated Link:</p>
-    <div className="flex flex-col sm:flex-row gap-4">
-      <div className="flex-1">
-        <Input 
-          value={generateCheckoutUrl(linkId)} 
-          readOnly 
-          className="bg-white text-gray-900 border-gray-300 text-sm mb-3"
+      {/* Cart Preview and Custom Line Items */}
+      <div className="space-y-6">
+        <CartPreview
+          products={formData.selectedProducts}
+          customLineItems={formData.customLineItems}
+          currency={formData.currency}
+          onRemoveProduct={handleRemoveProduct}
+          onRemoveCustomItem={handleRemoveCustomItem}
+          onUpdateQuantity={handleUpdateQuantity}
+          onUpdateCustomQuantity={handleUpdateCustomQuantity}
         />
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            onClick={() => window.open(generateCartUrl(linkId), '_blank')}
-            className="bg-blue-600 text-white font-semibold px-8 py-3 text-lg whitespace-nowrap hover:bg-blue-700 transition-colors"
-          >
-            View Cart →
-          </Button>
-          <Button
-            type="button"
-            onClick={() => window.open(generateCheckoutUrl(linkId), '_blank')}
-            className="bg-green-600 text-white font-semibold px-8 py-3 text-lg whitespace-nowrap hover:bg-green-700 transition-colors"
-          >
-            Checkout →
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-lg">
-        {qrCodeUrl ? (
-          <>
-            <img 
-              src={qrCodeUrl} 
-              alt="Checkout QR Code" 
-              className="w-32 h-32"
-              onError={(e) => console.log('Image load error:', e)}
-              onLoad={() => console.log('Image loaded successfully')}
-            />
-            <span className="text-sm text-gray-600">Scan to Checkout</span>
-          </>
-        ) : (
-          <span className="text-sm text-gray-600">QR Code not available</span>
+
+        {formData.currency && (
+          <CustomLineItemForm
+            currency={formData.currency}
+            onAdd={handleAddCustomItem}
+          />
         )}
       </div>
     </div>
-  </div>
-)}
-          <Button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-6 text-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                Generating Link...
-              </>
-            ) : (
-              'Generate Link'
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
   );
-    }
+}
 
 export default LinkCreator;

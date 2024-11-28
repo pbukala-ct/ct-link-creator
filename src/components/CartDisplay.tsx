@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { CreditCard, MapPin, Package, Calendar, Share2, QrCode } from 'lucide-react';
-import { User, Truck } from 'lucide-react';
+import { User, Truck, Tag } from 'lucide-react';
 import { CartData } from '@/types/commercetools';
+import { ctCustomLineItem } from '../types/commercetools';
 
 
   interface CartDisplayProps {
@@ -41,6 +42,13 @@ import { CartData } from '@/types/commercetools';
       });
     };
   
+    // Calculate totals
+  const standardItemsTotal = cart.lineItems.reduce((sum, item) => 
+    sum + item.totalPrice.centAmount, 0
+  );
+  const customItemsTotal = cart.customLineItems.reduce((sum, item) => 
+    sum + item.totalPrice.centAmount, 0
+  );
     // Render a simple loading state during hydration
     if (!isClient) {
       return <div>Loading...</div>;
@@ -111,6 +119,44 @@ import { CartData } from '@/types/commercetools';
                         </div>
                       ))}
                     </div>
+                    <div className="mb-8 space-y-4 "></div>
+
+                    {/* Custom Line Items */}
+            {cart.customLineItems.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <Tag className="mr-2 h-5 w-5" />
+                  Custom Line Items
+                </h3>
+                <div className="space-y-4">
+                  {cart.customLineItems.map((item) => (
+                    <div key={item.id} className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">
+                          {item.name.en || Object.values(item.name)[0]}
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Quantity: {item.quantity}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">
+                          {formatPrice(item.totalPrice.centAmount, item.totalPrice.currencyCode)}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {formatPrice(item.money.centAmount, item.money.currencyCode)} each
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 text-right">
+                  <p className="text-sm text-gray-600">
+                    Custom Items Subtotal: {formatPrice(customItemsTotal, cart.totalPrice.currencyCode)}
+                  </p>
+                </div>
+              </div>
+            )}
                   </CardContent>
                 </Card>
     
@@ -135,29 +181,9 @@ import { CartData } from '@/types/commercetools';
                     </div>
                   </CardContent>
                 </Card>
-{/* 
-                <Card className="shadow-lg">
-            <CardHeader className="border-b bg-gray-50">
-              <CardTitle className="text-xl text-gray-800 flex items-center">
-                <User className="mr-2 h-5 w-5" />
-                Customer Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {cart.customer ? (
-                <div className="space-y-2">
-                  <p className="text-gray-800 font-semibold">
-                    {cart.customer.firstName} {cart.customer.lastName}
-                  </p>
-                  <p className="text-gray-600">{cart.customer.email}</p>
-                </div>
-              ) : (
-                <p className="text-gray-600 italic">No customer assigned</p>
-              )}
-            </CardContent>
-          </Card> */}
 
-          <Card className="shadow-lg">
+
+<Card className="shadow-lg">
   <CardHeader className="border-b bg-gray-50">
     <CardTitle className="text-xl text-gray-800 flex items-center">
       <Truck className="mr-2 h-5 w-5" />
@@ -222,9 +248,7 @@ import { CartData } from '@/types/commercetools';
   </CardContent>
 </Card>
 
-              
-
-              </div>
+               </div>
                    
               
     
@@ -286,15 +310,29 @@ import { CartData } from '@/types/commercetools';
                         <span className="font-medium">Country:</span>
                         <span>{cart.country}</span>
                       </div>
-                      
-                      <div className="pt-4 border-t mt-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold text-gray-800">Total</span>
-                          <span className="text-2xl font-bold text-gray-800">
-                            {formatPrice(cart.totalPrice.centAmount, cart.totalPrice.currencyCode)}
-                          </span>
-                        </div>
                       </div>
+                      
+                      <div className="border-t pt-4 mt-8">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Products Subtotal:</span>
+                  <span>{formatPrice(standardItemsTotal, cart.totalPrice.currencyCode)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Custom Items Subtotal:</span>
+                  <span>{formatPrice(customItemsTotal, cart.totalPrice.currencyCode)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Shipping:</span>
+                  <span>{formatPrice(cart.shippingInfo?.price?.centAmount || 0, cart.totalPrice.currencyCode)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-lg text-gray-900 pt-2">
+                  <span>Total:</span>
+                  <span>{formatPrice(cart.totalPrice.centAmount, cart.totalPrice.currencyCode)}</span>
+                </div>
+              </div>
+
+
                     </div>
                   </CardContent>
                 </Card>

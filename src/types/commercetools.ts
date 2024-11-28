@@ -1,3 +1,42 @@
+export interface CartProduct {
+  id: string;
+  quantity: number;
+  name?: string; // For display purposes
+}
+
+export interface CustomLineItem {
+  name: string;
+  quantity: number;
+  price: number;
+  currency: string;
+}
+
+export interface ctCustomLineItem {
+  id: string;
+  name: {
+    en: string;
+    [key: string]: string;
+  };
+  quantity: number;
+  money: {
+    centAmount: number;
+    currencyCode: string;
+  };
+  totalPrice: {
+    centAmount: number;
+    currencyCode: string;
+  };
+}
+
+export interface FormData {
+  selectedProducts: CartProduct[];
+  customLineItems: CustomLineItem[];
+  currency: string;
+  shippingMethod: string;
+  customerId: string;
+}
+
+
 export interface Product {
     id: string;
     name: string;
@@ -80,6 +119,7 @@ export interface Product {
         firstName?: string;
         lastName?: string;
       };
+      customLineItems: ctCustomLineItem[];
       shippingInfo: ShippingInfo;
       lineItems: Array<{
         id: string;

@@ -1,10 +1,12 @@
 // src/app/api/links/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiRoot } from '@/lib/commercetools/create.client';
-import { CartDraft } from '@commercetools/platform-sdk';
+import { CartDraft, CustomLineItemDraft } from '@commercetools/platform-sdk';
 import { generateQRCodeAsDataURL } from '@/lib/utils/qr';
 import { dataURLtoBuffer } from '@/lib/utils/qr';
 import { uploadToGCS } from '@/lib/utils/gcs';
+
+
 
 // Currency to country mapping
 const CURRENCY_COUNTRY_MAP: Record<string, string> = {
@@ -48,8 +50,12 @@ const COUNTRY_ADDRESS_MAP: Record<string, any> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { products, currency, shippingMethod, customerId } = await request.json();
-
+    const requestData = await request.json();
+    console.log('Received request data:', JSON.stringify(requestData, null, 2));
+    
+    const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId } = requestData;
+    
+    console.log('Products array:', JSON.stringify(selectedProducts, null, 2))
     // Get the country based on currency
     const country = CURRENCY_COUNTRY_MAP[currency];
     if (!country) {
@@ -73,14 +79,35 @@ export async function POST(request: NextRequest) {
      const buffer = dataURLtoBuffer(qrDataUrl);
      const qrCodeUrl = await uploadToGCS(buffer, linkId);
 
+
+
+    // Transform custom line items only if they exist
+    const transformedCustomLineItems: CustomLineItemDraft[] = (customLineItems || []).map((item: any) => ({
+      name: {
+        en: item.name
+      },
+      quantity: item.quantity,
+      money: {
+        centAmount: Math.round(item.price * 100), // Convert to cents
+        currencyCode: currency,
+        type: "centPrecision"
+      },
+      slug: item.name.toLowerCase().replace(/\s+/g, '-'),
+      taxCategory: {
+        typeId: "tax-category",
+        id: process.env.DEFAULT_TAX_CATEGORY_ID
+      }
+    }));
+
     const cartDraft: CartDraft = {
       currency,
       customerId, 
       country, // Set the cart's country based on currency
-      lineItems: products.map((product: { id: string; quantity: number }) => ({
+      lineItems: selectedProducts.map((product: { id: string; quantity: number }) => ({
         productId: product.id,
         quantity: product.quantity,
       })),
+      customLineItems: transformedCustomLineItems,
       shippingMode: 'Single',
       shippingAddress: {
         country,

@@ -98,8 +98,12 @@ const handleCustomerChange = (customerId: string) => {
 
 // Update the currency selection handler
 const handleCurrencyChange = (value: string) => {
-  setError(''); // Reset error when currency changes
-  setFormData({...formData, currency: value});
+  setError(''); 
+  setFormData({
+    ...formData, 
+    currency: value,
+    selectedProducts: [] // Reset products when currency changes
+  });
 };
 
 // Handle product selection

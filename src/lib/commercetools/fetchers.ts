@@ -1,8 +1,10 @@
 // src/lib/commercetools/fetchers.ts
-import { ProductPrice } from '@/types/commercetools';
+import { ProductPrice, SimplifiedDiscountCode } from '@/types/commercetools';
 import { createApiRoot } from './create.client';
 import { ProductProjection, ShippingMethod } from '@commercetools/platform-sdk';
 import { Customer } from '@commercetools/platform-sdk';
+import type { LocalizedString, CartDiscountReference } from '@commercetools/platform-sdk';
+import type { DiscountCode } from '@commercetools/platform-sdk';
 
 
 
@@ -178,6 +180,36 @@ export const fetchShippingMethods = async (): Promise<SimplifiedShippingMethod[]
     }));
   } catch (error) {
     console.error('Error fetching shipping methods:', error);
+    throw error;
+  }
+};
+
+export const fetchDiscountCodes = async (): Promise<SimplifiedDiscountCode[]> => {
+  try {
+    const response = await createApiRoot()
+      .discountCodes()
+      .get({
+        queryArgs: {
+          limit: 100,
+          sort: ['code asc'],
+          where: 'isActive=true'
+        }
+      })
+      .execute();
+
+    return response.body.results.map((discount: DiscountCode): SimplifiedDiscountCode => ({
+      id: discount.id,
+      code: discount.code,
+      name: discount.name ? { ...discount.name } : undefined,
+      description: discount.description ? { ...discount.description } : undefined,
+      cartDiscounts: discount.cartDiscounts.map(ref => ({
+        id: ref.id,
+        typeId: ref.typeId
+      })),
+      isActive: discount.isActive
+    }));
+  } catch (error) {
+    console.error('Error fetching discount codes:', error);
     throw error;
   }
 };

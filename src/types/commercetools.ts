@@ -195,3 +195,18 @@ export interface Product {
         };
       };
     }
+    export interface SimplifiedDiscountCode {
+      id: string;
+      code: string;
+      name?: {
+        [key: string]: string;
+      };
+      description?: {
+        [key: string]: string;
+      };
+      cartDiscounts: {
+        id: string;
+        typeId: string;
+      }[];
+      isActive: boolean;
+    }

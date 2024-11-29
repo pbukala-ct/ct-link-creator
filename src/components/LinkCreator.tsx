@@ -14,6 +14,8 @@ import { CartPreview } from './CartPreview';
 import { CustomLineItemForm } from './CustomLineItemForm';
 import { AddressDisplay } from './AddressDisplay';
 import { SearchableCombobox } from './SearchableCombobox';
+import { fetchDiscountCodes } from '@/lib/commercetools/fetchers';
+import type { SimplifiedDiscountCode } from '../types/commercetools';
 
 
 interface FormData {
@@ -22,6 +24,7 @@ interface FormData {
   currency: string;
   shippingMethod: string;
   customerId: string;
+  discountCode?: string; 
 }
 
 
@@ -35,6 +38,7 @@ export const LinkCreator: React.FC = () => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [customers, setCustomers] = useState<SimplifiedCustomer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<SimplifiedCustomer | null>(null);
+  const [discountCodes, setDiscountCodes] = useState<SimplifiedDiscountCode[]>([]);
 
   
   const [formData, setFormData] = useState<FormData>({
@@ -42,7 +46,8 @@ export const LinkCreator: React.FC = () => {
     customLineItems: [],
     currency: '',
     shippingMethod: '',
-    customerId: ''
+    customerId: '',
+    discountCode: '',
   });
 
   const generateCartUrl = (linkId: string) => {
@@ -67,17 +72,19 @@ export const LinkCreator: React.FC = () => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
-        const [productsData, currenciesData, shippingData, customersData] = await Promise.all([
+        const [productsData, currenciesData, shippingData, customersData, discountCodesData] = await Promise.all([
           fetchProducts(),
           fetchCurrencies(),
           fetchShippingMethods(),
-          fetchCustomers()
+          fetchCustomers(),
+          fetchDiscountCodes()
         ]);
         
         setProducts(productsData);
         setCurrencies(currenciesData);
         setShippingMethods(shippingData);
         setCustomers(customersData);
+        setDiscountCodes(discountCodesData);
       } catch (err) {
         setError('Failed to load data from commercetools');
         console.error('Error loading initial data:', err);
@@ -348,6 +355,35 @@ formData.shippingMethod &&
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Add Discount Code Selection */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-[#191741]">Apply Discount (Optional)</label>
+        <Select
+          value={formData.discountCode}
+          onValueChange={(value) => setFormData({...formData, discountCode: value})}
+        >
+          <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741] border-[#191741]">
+            <SelectValue placeholder="Select discount code" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
+          {discountCodes.map((discount) => (
+  <SelectItem 
+    key={discount.id} 
+    value={discount.code}
+    className="hover:bg-white cursor-pointer py-2 text-[#191741]"
+  >
+    {(discount.name && (Object.values(discount.name)[0])) || discount.code}
+    {discount.description && (
+      <span className="text-sm text-gray-500 ml-2">
+        ({Object.values(discount.description)[0]})
+      </span>
+    )}
+  </SelectItem>
+))}
+          </SelectContent>
+        </Select>
+      </div>
 
               {error && (
   <Alert 

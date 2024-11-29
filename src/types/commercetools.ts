@@ -2,11 +2,33 @@ export interface CartProduct {
   id: string;
   name: string;
   quantity: number;
+  price?: ProductPrice; // Selected price for the current currency
   variant?: {
     images?: Array<{
       url: string;
     }>;
   };
+}
+
+export interface ProductPrice {
+  id: string;
+  value: {
+    type: string;
+    currencyCode: string;
+    centAmount: number;
+    fractionDigits: number;
+  };
+  country?: string;
+  customerGroup?: {
+    id: string;
+    typeId: string;
+  };
+  channel?: {
+    id: string;
+    typeId: string;
+  };
+  validFrom?: string;
+  validUntil?: string;
 }
 
 export interface CustomLineItem {

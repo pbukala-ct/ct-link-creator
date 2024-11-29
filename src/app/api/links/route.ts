@@ -51,7 +51,7 @@ const COUNTRY_ADDRESS_MAP: Record<string, any> = {
 export async function POST(request: NextRequest) {
   try {
     const requestData = await request.json();
-    console.log('Received request data:', JSON.stringify(requestData, null, 2));
+    //console.log('Received request data:', JSON.stringify(requestData, null, 2));
     
     const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId } = requestData;
     

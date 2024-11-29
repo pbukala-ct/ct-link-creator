@@ -2,7 +2,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Package, Trash2 } from 'lucide-react';
-import { CartProduct, CustomLineItem } from '../types/commercetools';
+import { CartProduct, CustomLineItem, ProductPrice } from '../types/commercetools';
 
 interface CartPreviewProps {
   products: CartProduct[];
@@ -23,7 +23,37 @@ export function CartPreview({
   onUpdateQuantity,
   onUpdateCustomQuantity,
 }: CartPreviewProps) {
-  const formatPrice = (amount: number) => {
+
+    const formatPrice = (price: ProductPrice) => {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: price.value.currencyCode,
+        }).format(price.value.centAmount / Math.pow(10, price.value.fractionDigits));
+      };
+    
+      const calculateSubtotal = () => {
+        const productsTotal = products.reduce((sum, product) => {
+          if (!product.price) return sum;
+          return sum + (product.price.value.centAmount * product.quantity);
+        }, 0);
+    
+        const customItemsTotal = customLineItems.reduce((sum, item) => {
+          return sum + (item.price * 100 * item.quantity); // Convert custom item price to cents
+        }, 0);
+    
+        return formatPrice({
+          id: 'subtotal',
+          value: {
+            type: 'centPrecision',
+            currencyCode: currency,
+            centAmount: productsTotal + customItemsTotal,
+            fractionDigits: 2
+          }
+        });
+      };
+
+    
+  const formatPriceCustomLineItem = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -70,6 +100,19 @@ export function CartPreview({
         />
       </div>
     </div>
+    <div className="text-right">
+                {product.price && (
+                  <p className="font-semibold text-[#191741]">
+                    {formatPrice({
+                      ...product.price,
+                      value: {
+                        ...product.price.value,
+                        centAmount: product.price.value.centAmount * product.quantity
+                      }
+                    })}
+                  </p>
+                )}
+              </div>
     <Button
       variant="ghost"
       size="sm"
@@ -85,7 +128,7 @@ export function CartPreview({
             <div key={index} className="flex items-center justify-between p-2 bg-[#FFE9A1] rounded-lg border border-[#191741]">
                <div className="flex-1">
                 <p className="font-medium text-gray-800">{item.name}</p>
-                <p className="text-sm text-gray-600">{formatPrice(item.price)}</p>
+                <p className="text-sm text-gray-600">{formatPriceCustomLineItem(item.price)}</p>
                 <div className="flex items-center mt-1">
                   <label className="text-sm text-gray-600 mr-2">Qty:</label>
                   <input
@@ -118,6 +161,10 @@ export function CartPreview({
               <div className="flex justify-between font-semibold text-[#191741]">
                 <span>Total Items:</span>
                 <span>{products.length + customLineItems.length}</span>
+              </div>
+              <div className="flex justify-between font-semibold text-[#191741]">
+                <span>Subtotal:</span>
+                <span>{calculateSubtotal()}</span>
               </div>
             </div>
           )}

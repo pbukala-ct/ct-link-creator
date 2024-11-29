@@ -96,38 +96,62 @@ const handleCustomerChange = (customerId: string) => {
   setFormData({...formData, customerId});
 };
 
+// Update the currency selection handler
+const handleCurrencyChange = (value: string) => {
+  setError(''); // Reset error when currency changes
+  setFormData({...formData, currency: value});
+};
+
 // Handle product selection
 const handleAddProduct = (productId: string) => {
   const product = products.find(p => p.id === productId);
-  console.log('Selected product:', product); // Debug log
+  if (!product) return;
 
-  if (product) {
-    const existingProduct = formData.selectedProducts.find(p => p.id === productId);
-    if (existingProduct) {
-      setFormData({
-        ...formData,
-        selectedProducts: formData.selectedProducts.map(p =>
-          p.id === productId ? { ...p, quantity: p.quantity + 1 } : p
-        )
-      });
-    } else {
-      const newProduct = { 
-        id: productId, 
-        quantity: 1,
-        name: product.name,
-        variant: {
-          images: product.variant?.images
-        }
-      };
-      console.log('Adding new product:', newProduct); // Debug log
-      
-      setFormData({
-        ...formData,
-        selectedProducts: [...formData.selectedProducts, newProduct]
-      });
-    }
-    console.log('Updated formData:', formData); // Debug log
+  // Find matching price for selected currency
+  const matchingPrice = product.prices.find(price => 
+    price.value.currencyCode === formData.currency &&
+    (!price.validFrom || new Date(price.validFrom) <= new Date()) &&
+    (!price.validUntil || new Date(price.validUntil) >= new Date())
+  );
+
+  if (!matchingPrice) {
+    // Show error if no matching price found
+    setError(`No price available for ${product.name} in ${formData.currency}`);
+    return;
   }
+
+  const existingProduct = formData.selectedProducts.find(p => p.id === productId);
+  if (existingProduct) {
+    setFormData({
+      ...formData,
+      selectedProducts: formData.selectedProducts.map(p =>
+        p.id === productId ? { ...p, quantity: p.quantity + 1 } : p
+      )
+    });
+  } else {
+    const newProduct: CartProduct = {
+      id: productId,
+      quantity: 1,
+      name: product.name,
+      price: matchingPrice,
+      variant: {
+        images: product.variant?.images
+      }
+    };
+
+    setFormData({
+      ...formData,
+      selectedProducts: [...formData.selectedProducts, newProduct]
+    });
+  }
+};
+
+const handleSelectProduct = (productId: string) => {
+  if (!formData.currency) {
+    setError('Please select a currency first');
+    return;
+  }
+  handleAddProduct(productId);
 };
 
 
@@ -270,7 +294,7 @@ formData.shippingMethod &&
                 <label className="text-sm font-medium text-[#191741]">Currency</label>
                 <Select
                   value={formData.currency}
-                  onValueChange={(value) => setFormData({...formData, currency: value})}
+                  onValueChange={handleCurrencyChange} 
                 >
                   <SelectTrigger className="w-full bg-[#F7F2EA] text-[#191741]">
                     <SelectValue placeholder="Select currency" className="text-[#191741]" />
@@ -294,7 +318,7 @@ formData.shippingMethod &&
                 <label className="text-sm font-medium text-[#191741]">Add Product</label>
                 <SearchableCombobox 
                   products={products} 
-                  onSelect={handleAddProduct}
+                  onSelect={handleSelectProduct}
                 />
               </div>
 
@@ -322,11 +346,16 @@ formData.shippingMethod &&
               </div>
 
               {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+  <Alert 
+    variant="destructive" 
+    className="bg-[#ffc806] bg-opacity-20 border border-[#ffc806] text-[#191741]"
+  >
+    <AlertCircle className="h-4 w-4 text-[#191741]" />
+    <AlertDescription className="text-[#191741] ml-2 font-medium">
+      {error}
+    </AlertDescription>
+  </Alert>
+)}
 
               {linkId && (
                 <div className="p-6 bg-[#F7F2EA] rounded-lg border border-[#191741] shadow-sm">

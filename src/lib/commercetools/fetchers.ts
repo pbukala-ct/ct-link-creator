@@ -1,12 +1,16 @@
 // src/lib/commercetools/fetchers.ts
+import { ProductPrice } from '@/types/commercetools';
 import { createApiRoot } from './create.client';
 import { ProductProjection, ShippingMethod } from '@commercetools/platform-sdk';
 import { Customer } from '@commercetools/platform-sdk';
+
+
 
 export interface SimplifiedProduct {
   id: string;
   name: string;
   key?: string;
+  prices: ProductPrice[];
   variant?: {
     images?: Array<{
       url: string;
@@ -102,22 +106,40 @@ export const fetchProducts = async (): Promise<SimplifiedProduct[]> => {
       .get({
         queryArgs: {
           limit: 100,
-          sort: ['name.en asc']
+          sort: ['name.en asc'],
+          expand: ['masterVariant.prices[*].customerGroup', 'masterVariant.prices[*].channel']
         }
       })
       .execute();
 
-      console.log('Product response:', JSON.stringify(response.body.results[0], null, 2));
+    console.log('First product response:', JSON.stringify(response.body.results[0], null, 2));
 
+    return response.body.results.map((product: ProductProjection) => {
+      const prices = product.masterVariant.prices?.map(price => ({
+        id: price.id,
+        value: {
+          type: price.value.type,
+          currencyCode: price.value.currencyCode,
+          centAmount: price.value.centAmount,
+          fractionDigits: price.value.fractionDigits
+        },
+        country: price.country,
+        customerGroup: price.customerGroup,
+        channel: price.channel,
+        validFrom: price.validFrom,
+        validUntil: price.validUntil
+      })) || [];
 
-    return response.body.results.map((product: ProductProjection) => ({
-      id: product.id,
-      name: product.name.en || Object.values(product.name)[0], // fallback to first available language
-      key: product.key,
-      variant: {
-        images: product.masterVariant.images  
-      }
-    }));
+      return {
+        id: product.id,
+        name: product.name.en || Object.values(product.name)[0],
+        key: product.key,
+        prices,
+        variant: {
+          images: product.masterVariant.images
+        }
+      };
+    });
   } catch (error) {
     console.error('Error fetching products:', error);
     throw error;

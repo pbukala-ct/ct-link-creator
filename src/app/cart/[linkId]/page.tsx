@@ -5,9 +5,6 @@ import { Suspense } from 'react';
 import { CartData } from '@/types/commercetools';
 import { log } from 'console';
 
-interface PageProps {
-  params: { linkId: string };
-}
 
 export default async function CartPage({
   params,
@@ -46,6 +43,7 @@ export default async function CartPage({
       .get({
         queryArgs: {
           where: `custom(fields(linkId="${linkId}"))`,
+          expand: ['discountCodes[*].discountCode'],
           limit: 1
         }
       })
@@ -54,6 +52,7 @@ export default async function CartPage({
     if (!response.body.results.length) {
       return null;
     }
+    //console.log('Cart details:', JSON.stringify(response, null, 2));
 
     return response.body.results[0];
   } catch (error) {

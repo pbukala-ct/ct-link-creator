@@ -61,6 +61,7 @@ export interface FormData {
   currency: string;
   shippingMethod: string;
   customerId: string;
+  directDiscount?: DirectDiscount;
 }
 
 
@@ -148,6 +149,9 @@ export interface Product {
       };
       customLineItems: ctCustomLineItem[];
       shippingInfo: ShippingInfo;
+      discountOnTotalPrice: DiscountOnTotalPrice;
+      discountCodes: DiscountCodeInfo[]; 
+      taxedPrice: TaxedPrice; 
       lineItems: Array<{
         id: string;
         name: { [key: string]: string };
@@ -198,15 +202,118 @@ export interface Product {
     export interface SimplifiedDiscountCode {
       id: string;
       code: string;
-      name?: {
-        [key: string]: string;
-      };
-      description?: {
-        [key: string]: string;
-      };
-      cartDiscounts: {
-        id: string;
+      name: string;    // Will store either en, en-US or en-GB value
+      description?: string;  // Optional description in English
+      cartDiscounts: Array<{
         typeId: string;
-      }[];
+        id: string;
+      }>;
       isActive: boolean;
     }
+
+
+    export interface DiscountedCart {
+      discountCode?: string;
+      discountAmount?: {
+        centAmount: number;
+        currencyCode: string;
+        fractionDigits: number;
+      };
+    }
+
+
+    interface TaxedPrice {
+      totalNet: {
+        type: string;
+        currencyCode: string;
+        centAmount: number;
+        fractionDigits: number;
+      };
+      totalGross: {
+        type: string;
+        currencyCode: string;
+        centAmount: number;
+        fractionDigits: number;
+      };
+      taxPortions: Array<{
+        rate: number;
+        amount: {
+          type: string;
+          currencyCode: string;
+          centAmount: number;
+          fractionDigits: number;
+        };
+        name: string;
+      }>;
+      totalTax: {
+        type: string;
+        currencyCode: string;
+        centAmount: number;
+        fractionDigits: number;
+      };
+    }
+    
+    interface DiscountCodeInfo {
+      discountCode: {
+        typeId: string;
+        id: string;
+        obj?: {
+          id: string;
+          code: string;
+          version: number;
+          name?: {
+            [key: string]: string;
+          };
+          description?: {
+            [key: string]: string;
+          };
+          cartDiscounts: Array<{
+            typeId: string;
+            id: string;
+          }>;
+          isActive: boolean;
+        };
+      };
+      state: string;
+    }
+    
+    interface DiscountOnTotalPrice {
+      discountedAmount: {
+        type: string;
+        currencyCode: string;
+        centAmount: number;
+        fractionDigits: number;
+      };
+      includedDiscounts: Array<{
+        discount: {
+          typeId: string;
+          id: string;
+        };
+        discountedAmount: {
+          type: string;
+          currencyCode: string;
+          centAmount: number;
+          fractionDigits: number;
+        };
+      }>;
+      discountedNetAmount: {
+        type: string;
+        currencyCode: string;
+        centAmount: number;
+        fractionDigits: number;
+      };
+      discountedGrossAmount: {
+        type: string;
+        currencyCode: string;
+        centAmount: number;
+        fractionDigits: number;
+      };
+    }
+
+ export type DiscountType = 'relative' | 'absolute';
+
+export interface DirectDiscount {
+  type: DiscountType;
+  value: number; // For relative this will be percentage (0-100), for absolute the actual amount
+  currencyCode?: string; // Required only for absolute discount
+}

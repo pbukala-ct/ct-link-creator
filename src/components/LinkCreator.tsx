@@ -27,7 +27,11 @@ interface FormData {
   discountCode?: string; 
 }
 
-
+interface ErrorResponse {
+  error: string;
+  details?: string;
+  code?: number;
+}
 
 export const LinkCreator: React.FC = () => {
   const [products, setProducts] = useState<SimplifiedProduct[]>([]);
@@ -209,6 +213,13 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
   });
 };
 
+const handleRemoveDiscount = () => {
+  setFormData({
+    ...formData,
+    discountCode: undefined
+  });
+};
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -222,12 +233,15 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
         },
         body: JSON.stringify(formData),
       });
+      
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error('Failed to create link');
+        const errorData = data as ErrorResponse;
+        throw new Error(errorData.details || errorData.error);
       }
 
-      const data = await response.json();
+      
       console.log('API Response:', data);
       setGeneratedLink(data.link);
       setLinkId(data.linkId);
@@ -238,8 +252,16 @@ const handleUpdateCustomQuantity = (index: number, quantity: number) => {
         console.log('No QR Code URL in response');
       }
     } catch (err) {
-      setError('Failed to create link');
-      console.error('Error creating link:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create link';
+      setError(errorMessage);
+      
+      // If it's a discount code error, clear the discount code
+      if (errorMessage.toLowerCase().includes('discount code')) {
+        setFormData(prev => ({
+          ...prev,
+          discountCode: undefined
+        }));
+      }
     } finally {
       setLoading(false);
     }
@@ -358,7 +380,7 @@ formData.shippingMethod &&
 
               {/* Add Discount Code Selection */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-[#191741]">Apply Discount (Optional)</label>
+        <label className="text-sm font-medium text-[#191741]">Apply Discount Code (Optional)</label>
         <Select
           value={formData.discountCode}
           onValueChange={(value) => setFormData({...formData, discountCode: value})}
@@ -367,35 +389,44 @@ formData.shippingMethod &&
             <SelectValue placeholder="Select discount code" />
           </SelectTrigger>
           <SelectContent className="bg-[#F7F2EA] border border-[#191741] shadow-md">
-          {discountCodes.map((discount) => (
-  <SelectItem 
-    key={discount.id} 
-    value={discount.code}
-    className="hover:bg-white cursor-pointer py-2 text-[#191741]"
-  >
-    {(discount.name && (Object.values(discount.name)[0])) || discount.code}
-    {discount.description && (
-      <span className="text-sm text-gray-500 ml-2">
-        ({Object.values(discount.description)[0]})
-      </span>
-    )}
-  </SelectItem>
-))}
-          </SelectContent>
+  {discountCodes.map((discount) => (
+    <SelectItem 
+      key={discount.id} 
+      value={discount.code}
+      className="hover:bg-white cursor-pointer py-2 text-[#191741]"
+    >
+      <div>
+        <div className="font-medium">{discount.name}</div>
+        {discount.description && (
+          <div className="text-sm text-gray-600 mt-0.5">
+            {discount.description}
+          </div>
+        )}
+      </div>
+    </SelectItem>
+  ))}
+</SelectContent>
         </Select>
       </div>
 
-              {error && (
-  <Alert 
-    variant="destructive" 
-    className="bg-[#ffc806] bg-opacity-20 border border-[#ffc806] text-[#191741]"
-  >
-    <AlertCircle className="h-4 w-4 text-[#191741]" />
-    <AlertDescription className="text-[#191741] ml-2 font-medium">
-      {error}
-    </AlertDescription>
-  </Alert>
-)}
+            {error && (
+        <Alert 
+          variant="destructive" 
+          className="bg-[#ffc806] bg-opacity-20 border border-[#ffc806] text-[#191741]"
+        >
+          <AlertCircle className="h-4 w-4 text-[#191741]" />
+          <div className="ml-2">
+            <AlertDescription className="text-[#191741] font-medium">
+              {error}
+            </AlertDescription>
+            {error.toLowerCase().includes('discount code') && (
+              <p className="text-sm mt-1 text-[#191741]">
+                The discount code has been cleared. Please try another code or proceed without one.
+              </p>
+            )}
+          </div>
+        </Alert>
+      )}
 
               {linkId && (
                 <div className="p-6 bg-[#F7F2EA] rounded-lg border border-[#191741] shadow-sm">
@@ -471,6 +502,8 @@ formData.shippingMethod &&
           products={formData.selectedProducts}
           customLineItems={formData.customLineItems}
           currency={formData.currency}
+          discountCode={formData.discountCode}
+          onRemoveDiscount={handleRemoveDiscount} 
           onRemoveProduct={handleRemoveProduct}
           onRemoveCustomItem={handleRemoveCustomItem}
           onUpdateQuantity={handleUpdateQuantity}

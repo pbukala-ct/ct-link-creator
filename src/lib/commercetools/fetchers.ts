@@ -197,19 +197,29 @@ export const fetchDiscountCodes = async (): Promise<SimplifiedDiscountCode[]> =>
       })
       .execute();
 
-    return response.body.results.map((discount: DiscountCode): SimplifiedDiscountCode => ({
-      id: discount.id,
-      code: discount.code,
-      name: discount.name ? { ...discount.name } : undefined,
-      description: discount.description ? { ...discount.description } : undefined,
-      cartDiscounts: discount.cartDiscounts.map(ref => ({
-        id: ref.id,
-        typeId: ref.typeId
-      })),
-      isActive: discount.isActive
-    }));
-  } catch (error) {
-    console.error('Error fetching discount codes:', error);
-    throw error;
-  }
-};
+      return response.body.results.map((discount) => {
+        // Get English name (try different English locales)
+        const name = discount.name?.['en'] || 
+                     discount.name?.['en-US'] || 
+                     discount.name?.['en-GB'] || 
+                     discount.code;
+  
+        // Get English description (try different English locales)
+        const description = discount.description?.['en'] ||
+                           discount.description?.['en-US'] ||
+                           discount.description?.['en-GB'];
+  
+        return {
+          id: discount.id,
+          code: discount.code,
+          name,
+          description,
+          cartDiscounts: discount.cartDiscounts,
+          isActive: discount.isActive
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching discount codes:', error);
+      throw error;
+    }
+  };

@@ -1,13 +1,16 @@
 // src/components/CartPreview.tsx
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Package, Trash2 } from 'lucide-react';
-import { CartProduct, CustomLineItem, ProductPrice } from '../types/commercetools';
+import { Package, Tag, Trash2, X } from 'lucide-react';
+import { CartProduct, CustomLineItem, DiscountedCart, ProductPrice } from '../types/commercetools';
 
 interface CartPreviewProps {
   products: CartProduct[];
   customLineItems: CustomLineItem[];
   currency: string;
+  discountCode?: string;
+  discountInfo?: DiscountedCart;
+  onRemoveDiscount: () => void;
   onRemoveProduct: (id: string) => void;
   onRemoveCustomItem: (index: number) => void;
   onUpdateQuantity: (id: string, quantity: number) => void;
@@ -18,11 +21,21 @@ export function CartPreview({
   products,
   customLineItems,
   currency,
+  discountCode,
+  discountInfo,
+  onRemoveDiscount,
   onRemoveProduct,
   onRemoveCustomItem,
   onUpdateQuantity,
   onUpdateCustomQuantity,
 }: CartPreviewProps) {
+
+    const formatMoney = (money: { centAmount: number; currencyCode: string; fractionDigits: number }) => {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: money.currencyCode,
+        }).format(money.centAmount / Math.pow(10, money.fractionDigits));
+      };
 
     const formatPrice = (price: ProductPrice) => {
         return new Intl.NumberFormat('en-US', {
@@ -162,8 +175,37 @@ export function CartPreview({
                 <span>Total Items:</span>
                 <span>{products.length + customLineItems.length}</span>
               </div>
+              {/* Discount */}
+              {discountCode && (
+            <div className="space-y-2">
+                <div className="flex items-center justify-between text-[#191741] bg-[#F7F2EA] p-2 rounded-lg border border-[#191741]">
+                <div className="flex items-center">
+                    <Tag className="h-4 w-4 mr-2" />
+                    <span>Discount Code: </span>
+                    <code className="font-mono mx-2 bg-white px-2 py-0.5 rounded">
+                    {discountCode}
+                    </code>
+                </div>
+                <div className="flex items-center">
+                    {discountInfo?.discountAmount && (
+                    <span className="text-[#6359ff] mr-2">
+                        -{formatMoney(discountInfo.discountAmount)}
+                    </span>
+                    )}
+                    <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onRemoveDiscount}
+                    className="text-red-500 hover:text-red-700 hover:bg-white"
+                    >
+                    <X className="h-4 w-4" />
+                    </Button>
+                </div>
+                </div>
+            </div>
+            )}
               <div className="flex justify-between font-semibold text-[#191741]">
-                <span>Subtotal:</span>
+                <span>Subtotal (without discount):</span>
                 <span>{calculateSubtotal()}</span>
               </div>
             </div>

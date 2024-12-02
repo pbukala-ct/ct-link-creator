@@ -12,6 +12,27 @@ import { ctCustomLineItem } from '../types/commercetools';
     cart: CartData;
   }
 
+  interface DiscountOnTotalPrice {
+    discountedAmount: {
+      type: string;
+      currencyCode: string;
+      centAmount: number;
+      fractionDigits: number;
+    };
+    includedDiscounts: Array<{
+      discount: {
+        typeId: string;
+        id: string;
+      };
+      discountedAmount: {
+        type: string;
+        currencyCode: string;
+        centAmount: number;
+        fractionDigits: number;
+      };
+    }>;
+  }
+
   export function CartDisplay({ cart }: CartDisplayProps) {
     const [isClient, setIsClient] = useState(false);
     const [url, setUrl] = useState<string>('');
@@ -322,6 +343,37 @@ import { ctCustomLineItem } from '../types/commercetools';
                   <span>Custom Items Subtotal:</span>
                   <span>{formatPrice(customItemsTotal, cart.totalPrice.currencyCode)}</span>
                 </div>
+              {/* Discount Code */}
+                      {cart.discountCodes && cart.discountCodes.length > 0 && cart.discountCodes[0].discountCode.obj && (
+                        <div className="flex justify-between items-center py-2 px-3 bg-[#F7F2EA] rounded-md border border-[#191741]">
+                          <div className="flex items-center">
+                            <Tag className="h-4 w-4 mr-2 text-[#6359ff]" />
+                            <span className="text-[#191741]">Discount Code:</span>
+                            <code className="mx-2 px-2 py-0.5 bg-white rounded text-[#191741] font-mono">
+                              {cart.discountCodes[0].discountCode.obj?.code}
+                            </code>
+                          </div>
+                          <span className="text-[#6359ff] font-medium">Applied</span>
+                        </div>
+                      )}
+
+                  {/* Discount Amount */}
+                  {cart.discountOnTotalPrice && (
+                    <div className="flex justify-between text-[#191741]">
+                      <span>Discount</span>
+                      <span className="text-[#6359ff]">
+                        -{formatPrice(cart.discountOnTotalPrice.discountedAmount.centAmount, cart.discountOnTotalPrice.discountedAmount.currencyCode)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Tax Information */}
+                  {cart.taxedPrice && (
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Tax ({cart.taxedPrice.taxPortions[0]?.rate * 100}%)</span>
+                      <span>{formatPrice(cart.taxedPrice.totalTax.centAmount, cart.taxedPrice.totalTax.currencyCode)}</span>
+                    </div>
+                  )}
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Shipping:</span>
                   <span>{formatPrice(cart.shippingInfo?.price?.centAmount || 0, cart.totalPrice.currencyCode)}</span>

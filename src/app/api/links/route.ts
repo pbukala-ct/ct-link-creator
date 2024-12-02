@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
     const requestData = await request.json();
     //console.log('Received request data:', JSON.stringify(requestData, null, 2));
     
-    const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId } = requestData;
+    const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId, discountCode } = requestData;
     
-    console.log('Products array:', JSON.stringify(selectedProducts, null, 2))
+    //console.log('Products array:', JSON.stringify(selectedProducts, null, 2))
     // Get the country based on currency
     const country = CURRENCY_COUNTRY_MAP[currency];
     if (!country) {
@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
       })),
       customLineItems: transformedCustomLineItems,
       shippingMode: 'Single',
+      discountCodes: discountCode ? [discountCode] : [],
       shippingAddress: {
         country,
         firstName: 'Piotr',
@@ -146,6 +147,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
+    try { 
     const response = await createApiRoot()
       .carts()
       .post({
@@ -162,14 +164,46 @@ export async function POST(request: NextRequest) {
       qrCodeUrl,
     });
 
-  } catch (error) {
-    console.error('Error creating link:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to create link', 
-        details: error instanceof Error ? error.message : 'Unknown error' 
-      },
-      { status: 500 }
-    );
+  } catch (cartError: any) {
+    // Handle specific commercetools errors
+    if (cartError.statusCode === 400) {
+      // Extract specific error message
+      const errorMessage = cartError.message || '';
+      
+      if (errorMessage.includes('discount code') || errorMessage.includes('cart discounts')) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid discount code', 
+            details: 'The selected discount code is not currently active or cannot be applied to this cart.'
+          },
+          { status: 400 }
+        );
+      }
+
+      // Handle other specific error cases if needed
+      return NextResponse.json(
+        { 
+          error: 'Invalid cart configuration', 
+          details: errorMessage
+        },
+        { status: 400 }
+      );
+    }
+
+    throw cartError; // Re-throw other errors
   }
+
+} catch (error: any) {
+  console.error('Error creating link:', error);
+  
+  // Return a structured error response
+  return NextResponse.json(
+    { 
+      error: 'Failed to create link',
+      details: error.message || 'An unexpected error occurred',
+      code: error.statusCode || 500
+    },
+    { status: error.statusCode || 500 }
+  );
+}
 }

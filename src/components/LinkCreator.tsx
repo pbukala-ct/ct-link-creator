@@ -15,7 +15,8 @@ import { CustomLineItemForm } from './CustomLineItemForm';
 import { AddressDisplay } from './AddressDisplay';
 import { SearchableCombobox } from './SearchableCombobox';
 import { fetchDiscountCodes } from '@/lib/commercetools/fetchers';
-import type { SimplifiedDiscountCode } from '../types/commercetools';
+import type { DirectDiscount, SimplifiedDiscountCode } from '../types/commercetools';
+import { DirectDiscountForm } from './DirectDiscountForm';
 
 
 interface FormData {
@@ -24,7 +25,8 @@ interface FormData {
   currency: string;
   shippingMethod: string;
   customerId: string;
-  discountCode?: string; 
+  discountCode?: string;
+  directDiscount? : DirectDiscount
 }
 
 interface ErrorResponse {
@@ -52,6 +54,7 @@ export const LinkCreator: React.FC = () => {
     shippingMethod: '',
     customerId: '',
     discountCode: '',
+    directDiscount: undefined,
   });
 
   const generateCartUrl = (linkId: string) => {
@@ -100,14 +103,14 @@ export const LinkCreator: React.FC = () => {
     loadInitialData();
   }, []);
 
-  // Update the customer selection handler
+
 const handleCustomerChange = (customerId: string) => {
   const customer = customers.find(c => c.id === customerId);
   setSelectedCustomer(customer || null);
   setFormData({...formData, customerId});
 };
 
-// Update the currency selection handler
+
 const handleCurrencyChange = (value: string) => {
   setError(''); 
   setFormData({
@@ -220,6 +223,13 @@ const handleRemoveDiscount = () => {
   });
 };
 
+const handleRemoveDirectDiscount = () => {
+  setFormData({
+    ...formData,
+    directDiscount: undefined
+  });
+};
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -267,7 +277,7 @@ const handleRemoveDiscount = () => {
     }
   };
 
-  // Update the form validation
+
 const isFormValid = 
 formData.currency && 
 formData.shippingMethod && 
@@ -292,8 +302,8 @@ formData.shippingMethod &&
     <CardTitle className="text-2xl font-bold text-[#191741]">Cart Link Creator</CardTitle>
   </CardHeader>
   <CardContent className="bg-[#FBF9F5]">
-            <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
+  <form onSubmit={handleSubmit} className="space-y-6">
+  <div className="space-y-2">
   <label className="text-sm font-medium text-[#191741]">Customer</label>
   <Select
     value={formData.customerId}
@@ -317,7 +327,7 @@ formData.shippingMethod &&
     </SelectContent>
   </Select>
   
-  {/* Add address display */}
+
   {selectedCustomer && (
     <AddressDisplay address={selectedCustomer.defaultShippingAddress} />
   )}
@@ -378,7 +388,7 @@ formData.shippingMethod &&
                 </Select>
               </div>
 
-              {/* Add Discount Code Selection */}
+       
       <div className="space-y-2">
         <label className="text-sm font-medium text-[#191741]">Apply Discount Code (Optional)</label>
         <Select
@@ -405,9 +415,32 @@ formData.shippingMethod &&
       </div>
     </SelectItem>
   ))}
+
+
+
+
+
+
 </SelectContent>
         </Select>
       </div>
+
+      {formData.currency ? (
+  <>
+    <div className="border-t pt-4 mt-4">
+    
+      <DirectDiscountForm
+        value={formData.directDiscount}
+        currency={formData.currency}
+        onChange={(discount) => setFormData({ ...formData, directDiscount: discount })}
+      />
+    </div>
+  </>
+) : (
+  <div className="text-sm text-gray-500">
+    Select a currency to add direct discount
+  </div>
+)}
 
             {error && (
         <Alert 
@@ -503,12 +536,13 @@ formData.shippingMethod &&
           customLineItems={formData.customLineItems}
           currency={formData.currency}
           discountCode={formData.discountCode}
-          onRemoveDiscount={handleRemoveDiscount} 
-          onRemoveProduct={handleRemoveProduct}
+          directDiscount={formData.directDiscount}
           onRemoveCustomItem={handleRemoveCustomItem}
+          onRemoveDiscount={handleRemoveDiscount}
+          onRemoveProduct={handleRemoveProduct}
           onUpdateQuantity={handleUpdateQuantity}
-          onUpdateCustomQuantity={handleUpdateCustomQuantity}
-        />
+          onUpdateCustomQuantity={handleUpdateCustomQuantity} 
+          onRemoveDirectDiscount={handleRemoveDirectDiscount}        />
 
         {formData.currency && (
           <CustomLineItemForm

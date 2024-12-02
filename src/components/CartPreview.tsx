@@ -1,8 +1,8 @@
 // src/components/CartPreview.tsx
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Package, Tag, Trash2, X } from 'lucide-react';
-import { CartProduct, CustomLineItem, DiscountedCart, ProductPrice } from '../types/commercetools';
+import { Package, Percent, Tag, Trash2, X } from 'lucide-react';
+import { CartProduct, CustomLineItem, DirectDiscount, DiscountedCart, ProductPrice } from '../types/commercetools';
 
 interface CartPreviewProps {
   products: CartProduct[];
@@ -10,11 +10,13 @@ interface CartPreviewProps {
   currency: string;
   discountCode?: string;
   discountInfo?: DiscountedCart;
+  directDiscount?: DirectDiscount;
   onRemoveDiscount: () => void;
   onRemoveProduct: (id: string) => void;
   onRemoveCustomItem: (index: number) => void;
   onUpdateQuantity: (id: string, quantity: number) => void;
   onUpdateCustomQuantity: (index: number, quantity: number) => void;
+  onRemoveDirectDiscount: () => void;
 }
 
 export function CartPreview({
@@ -23,6 +25,7 @@ export function CartPreview({
   currency,
   discountCode,
   discountInfo,
+  directDiscount,
   onRemoveDiscount,
   onRemoveProduct,
   onRemoveCustomItem,
@@ -204,6 +207,24 @@ export function CartPreview({
                 </div>
             </div>
             )}
+       {directDiscount && (
+        <div className="flex justify-between items-center py-2 px-3 bg-[#F7F2EA] rounded-md border border-[#191741]">
+          <div className="flex items-center">
+            <Percent className="h-4 w-4 mr-2 text-[#6359ff]" />
+            <span className="text-[#191741]">Direct Discount:</span>
+            <code className="mx-2 px-2 py-0.5 bg-white rounded text-[#191741] font-mono">
+              {directDiscount.type === 'relative' 
+                ? `${directDiscount.value}%`
+                : formatMoney({
+                    centAmount: Math.round(directDiscount.value * 100),
+                    currencyCode: directDiscount.currencyCode!,
+                    fractionDigits: 2
+                  })}
+            </code>
+          </div>
+          <span className="text-[#6359ff] font-medium">Will be applied</span>
+        </div>
+)}
               <div className="flex justify-between font-semibold text-[#191741]">
                 <span>Subtotal (without discount):</span>
                 <span>{calculateSubtotal()}</span>

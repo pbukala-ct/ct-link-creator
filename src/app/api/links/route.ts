@@ -51,44 +51,33 @@ const COUNTRY_ADDRESS_MAP: Record<string, any> = {
 export async function POST(request: NextRequest) {
   try {
     const requestData = await request.json();
-    //console.log('Received request data:', JSON.stringify(requestData, null, 2));
     
-    const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId, discountCode } = requestData;
+    const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId, discountCode, directDiscount } = requestData;
     
-    //console.log('Products array:', JSON.stringify(selectedProducts, null, 2))
-    // Get the country based on currency
     const country = CURRENCY_COUNTRY_MAP[currency];
     if (!country) {
       throw new Error(`Unsupported currency: ${currency}`);
     }
 
-    // Get country-specific address details
     const addressDetails = COUNTRY_ADDRESS_MAP[country];
 
-    // Generate a unique ID for the link
     const linkId = Math.random().toString(36).slice(2);
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-    // Generate checkout URL
     const checkoutUrl = `${baseUrl}/checkout/${linkId}`;
 
+    const qrDataUrl = await generateQRCodeAsDataURL(checkoutUrl);
+    const buffer = dataURLtoBuffer(qrDataUrl);
+    const qrCodeUrl = await uploadToGCS(buffer, linkId);
 
-     // Generate QR code and upload to GCS
-     const qrDataUrl = await generateQRCodeAsDataURL(checkoutUrl);
-     const buffer = dataURLtoBuffer(qrDataUrl);
-     const qrCodeUrl = await uploadToGCS(buffer, linkId);
-
-
-
-    // Transform custom line items only if they exist
     const transformedCustomLineItems: CustomLineItemDraft[] = (customLineItems || []).map((item: any) => ({
       name: {
         en: item.name
       },
       quantity: item.quantity,
       money: {
-        centAmount: Math.round(item.price * 100), // Convert to cents
+        centAmount: Math.round(item.price * 100),
         currencyCode: currency,
         type: "centPrecision"
       },
@@ -102,7 +91,7 @@ export async function POST(request: NextRequest) {
     const cartDraft: CartDraft = {
       currency,
       customerId, 
-      country, // Set the cart's country based on currency
+      country,
       lineItems: selectedProducts.map((product: { id: string; quantity: number }) => ({
         productId: product.id,
         quantity: product.quantity,
@@ -110,6 +99,7 @@ export async function POST(request: NextRequest) {
       customLineItems: transformedCustomLineItems,
       shippingMode: 'Single',
       discountCodes: discountCode ? [discountCode] : [],
+      
       shippingAddress: {
         country,
         firstName: 'Piotr',
@@ -117,7 +107,7 @@ export async function POST(request: NextRequest) {
         email: 'piotr.bukala@commercetools.com',
         streetName: 'Default Street',
         streetNumber: '1',
-        ...addressDetails, // Add country-specific address details
+        ...addressDetails,
       },
       billingAddress: {
         country,
@@ -126,7 +116,7 @@ export async function POST(request: NextRequest) {
         streetName: 'Default Street',
         email: 'piotr.bukala@commercetools.com',
         streetNumber: '1',
-        ...addressDetails, // Add country-specific address details
+        ...addressDetails,
       },
       ...(shippingMethod && {
         shippingMethod: {
@@ -154,6 +144,40 @@ export async function POST(request: NextRequest) {
         body: cartDraft
       })
       .execute();
+
+    if (directDiscount) {
+      const discountValue = directDiscount.type === 'relative' 
+        ? {
+            type: "relative" as const,
+            permyriad: directDiscount.value * 100
+          }
+        : {
+            type: "absolute" as const,
+            money: [{
+              currencyCode: directDiscount.currencyCode,
+              centAmount: Math.round(directDiscount.value * 100)
+            }]
+          };
+
+      const updatedCartResponse = await createApiRoot()
+        .carts()
+        .withId({ID: response.body.id})
+        .post({
+          body: {
+            version: response.body.version,
+            actions: [{
+              action: "setDirectDiscounts",
+              discounts: [{
+                value: discountValue,
+                target: {
+                  type: "totalPrice"
+                }
+              }]
+            }]
+          }
+        })
+        .execute();
+      }
 
     const linkUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/links/${linkId}`;
     console.log('Generated QR Code URL:', qrCodeUrl);

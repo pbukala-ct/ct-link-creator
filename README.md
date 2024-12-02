@@ -1,26 +1,38 @@
 # Commercetools Link Generator
 
-A Next.js application that allows business users to generate sharable cart links and QR codes for commercetools projects. The generated links and QR codes can be shared with customers to access pre-configured carts with specific products, shipping methods, and customer details.
+A Next.js application that allows business users to generate sharable cart links and QR codes for commercetools projects. The generated links and QR codes can be shared with customers to access pre-configured carts with specific products, shipping methods, customer details, and discounts.
 
 ## Features
 
 - **Cart Configuration**
-  - Select products from the commercetools catalog
+  - Select products from the commercetools catalog with quantity management
+  - Add custom line items with custom prices
   - Choose shipping method
   - Set currency (automatically sets appropriate country)
   - Assign customer from existing customers list
-  
+  - Apply discount codes
+  - Add direct discounts (percentage or fixed amount)
+
 - **Link Generation**
   - Creates a unique cart in commercetools
   - Generates a shareable link
   - Creates and stores QR code in Google Cloud Storage
   - Provides both cart view and direct checkout options
 
+- **Cart Preview**
+  - Real-time preview of cart contents
+  - Shows product thumbnails
+  - Displays prices and quantities
+  - Shows applied discounts (both discount codes and direct discounts)
+  - Calculate totals with tax information
+  - Shows shipping information
+
 - **Cart Display**
   - Modern, responsive cart view
-  - Shows selected products with quantities and prices
+  - Shows selected products with images
   - Displays shipping information and tax details
   - Shows customer information when assigned
+  - Displays all applied discounts
   - Includes QR code for easy sharing
 
 ## Tech Stack
@@ -30,7 +42,7 @@ A Next.js application that allows business users to generate sharable cart links
   - TypeScript
   - Tailwind CSS
   - shadcn/ui components
-  - QR Code generation using `qrcode`
+  - QR Code generation
 
 - **Backend**
   - Next.js API Routes
@@ -47,6 +59,8 @@ A Next.js application that allows business users to generate sharable cart links
 - Commercetools project with:
   - API client credentials
   - Custom type for cart links
+  - Configured discount codes
+  - Configured tax categories
 - Google Cloud Platform project with:
   - Storage bucket
   - Service account with appropriate permissions
@@ -72,6 +86,7 @@ GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
 
 # Application Configuration
 NEXT_PUBLIC_API_URL=http://localhost:3000 # Or your production URL
+DEFAULT_TAX_CATEGORY_ID=your-tax-category-id
 ```
 
 ## Setup
@@ -129,19 +144,12 @@ npm run dev
 ## Usage
 
 1. Access the application and log in
-2. Select products from the dropdown
+2. Select products from the dropdown or add custom line items
 3. Choose currency and shipping method
 4. Select a customer (optional)
-5. Generate the link
-6. Use the generated link or QR code to share the cart
-
-## Deployment
-
-The application can be deployed to any platform that supports Next.js applications. For Netlify deployment:
-
-1. Configure environment variables in Netlify dashboard
-2. Set the correct `NEXT_PUBLIC_BASE_URL` for production
-3. Deploy using the Netlify CLI or GitHub integration
+5. Apply discount code and/or direct discount (optional)
+6. Generate the link
+7. Use the generated link or QR code to share the cart
 
 ## Contributing
 

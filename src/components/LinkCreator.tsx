@@ -530,7 +530,7 @@ formData.shippingMethod &&
 
         <Card className="w-full max-w-2xl mx-auto">
   <CardHeader className="bg-[#F7F2EA] border-b border-[#191741]">
-    <CardTitle className="text-2xl font-bold text-[#191741]">Instructions</CardTitle>
+    <CardTitle className="text-2xl font-bold text-[#191741]">Instructions & Roadmap</CardTitle>
   </CardHeader>
   <CardContent className="space-y-4 pt-6">
     <div className="space-y-6">
@@ -573,6 +573,13 @@ formData.shippingMethod &&
           <li>Share with customers via email or messaging</li>
           <li>Links will load pre-configured carts with all selections</li>
           <li>Customers can proceed directly to checkout</li>
+        </ul>
+      </div>
+      <div>
+        <h2 className="font-semibold text-[#191741] mb-2">Roadmap</h2>
+        <ul className="list-disc pl-5 space-y-2 text-[#191741]">
+          <li>Leverage AI to suggest few potential carts configuration for customer based on previous order history or interest e.g. Braze/Algolia</li>
+          <li>Add send email button to sent email with cart/checkout link using Braze</li>
         </ul>
       </div>
     </div>

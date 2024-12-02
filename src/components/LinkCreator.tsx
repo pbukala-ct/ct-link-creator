@@ -527,7 +527,60 @@ formData.shippingMethod &&
             </form>
           </CardContent>
         </Card>
+
+        <Card className="w-full max-w-2xl mx-auto">
+  <CardHeader className="bg-[#F7F2EA] border-b border-[#191741]">
+    <CardTitle className="text-2xl font-bold text-[#191741]">Instructions</CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4 pt-6">
+    <div className="space-y-6">
+      {/* Basic Instructions */}
+      <div>
+        <h3 className="font-semibold text-[#191741] mb-2">Basic Usage</h3>
+        <ul className="list-disc pl-5 space-y-2 text-[#191741]">
+          <li>Select a currency first - this will determine the country for the cart</li>
+          <li>Add products from the dropdown - you can add multiple products</li>
+          <li>Set shipping method to specify delivery options</li>
+          <li>Optionally assign a customer to pre-fill shipping details</li>
+        </ul>
       </div>
+
+      {/* Discount Instructions */}
+      <div>
+        <h3 className="font-semibold text-[#191741] mb-2">Applying Discounts</h3>
+        <ul className="list-disc pl-5 space-y-2 text-[#191741]">
+          <li>Use discount codes for predefined promotions</li>
+          <li>Apply direct discounts as either percentage or fixed amount</li>
+          <li>You can combine both discount types</li>
+        </ul>
+      </div>
+
+      {/* Custom Items */}
+      <div>
+        <h3 className="font-semibold text-[#191741] mb-2">Custom Line Items</h3>
+        <ul className="list-disc pl-5 space-y-2 text-[#191741]">
+          <li>Add custom items for special products or services</li>
+          <li>Set custom prices in the selected currency</li>
+          <li>Manage quantities as needed</li>
+        </ul>
+      </div>
+
+      {/* Generated Link Usage */}
+      <div>
+        <h3 className="font-semibold text-[#191741] mb-2">Using Generated Links</h3>
+        <ul className="list-disc pl-5 space-y-2 text-[#191741]">
+          <li>Copy the generated link or use the QR code</li>
+          <li>Share with customers via email or messaging</li>
+          <li>Links will load pre-configured carts with all selections</li>
+          <li>Customers can proceed directly to checkout</li>
+        </ul>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+      </div>
+
+      
 
       {/* Cart Preview and Custom Line Items */}
       <div className="space-y-6">
@@ -551,7 +604,9 @@ formData.shippingMethod &&
           />
         )}
       </div>
+      
     </div>
+    
   );
 }
 

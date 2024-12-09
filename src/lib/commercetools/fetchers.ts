@@ -35,6 +35,8 @@ export interface SimplifiedAddress {
   state?: string;
   country: string;
   postalCode: string;
+  email?: string;
+
 }
 
 export interface SimplifiedCustomer {
@@ -78,6 +80,7 @@ export const fetchCustomers = async (): Promise<SimplifiedCustomer[]> => {
           defaultShippingAddress?.postalCode) {
         mappedAddress = {
           streetName: defaultShippingAddress.streetName,
+          email: defaultShippingAddress.email,
           streetNumber: defaultShippingAddress.streetNumber,
           city: defaultShippingAddress.city,
           state: defaultShippingAddress.state,

@@ -1,0 +1,9 @@
+gcloud functions deploy processOrderCreated \
+  --runtime nodejs18 \
+  --trigger-topic link-generator-order-created \
+  --entry-point processOrderCreated \
+  --region australia-southeast1 \
+  --service-account qr-code-storage@ct-sales-207211.iam.gserviceaccount.com
+  --ingress-settings=all \
+  --allow-unauthenticated
+  --set-env-vars "CTP_PROJECT_KEY=retail-anz,CTP_CLIENT_ID=IENRzOvkyYxIpJDBRNMOWpuF,CTP_CLIENT_SECRET=kVS9JifEkn3QWWkJ_8_OamDKANa38-BH,CTP_AUTH_URL=https://auth.australia-southeast1.gcp.commercetools.com,CTP_API_URL=https://api.australia-southeast1.gcp.commercetools.com,CTP_SCOPE=manage_project:retail-anz"

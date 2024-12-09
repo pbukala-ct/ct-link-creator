@@ -1,0 +1,8 @@
+gcloud functions deploy processLinkCreatedEvent \
+  --runtime nodejs18 \
+  --trigger-topic link-created-events \
+  --entry-point processLinkCreatedEvent \
+  --region australia-southeast1 \
+  --service-account qr-code-storage@ct-sales-207211.iam.gserviceaccount.com
+  --ingress-settings=all \
+  --allow-unauthenticated

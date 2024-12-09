@@ -5,6 +5,9 @@ import { CartDraft, CustomLineItemDraft } from '@commercetools/platform-sdk';
 import { generateQRCodeAsDataURL } from '@/lib/utils/qr';
 import { dataURLtoBuffer } from '@/lib/utils/qr';
 import { uploadToGCS } from '@/lib/utils/gcs';
+import { publishLinkCreatedEvent } from '@/lib/analytics/function/pubsub';
+import { LinkCreatedEvent } from '@/lib/analytics/schema';
+import { json } from 'stream/consumers';
 
 
 
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest) {
   try {
     const requestData = await request.json();
     
-    const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId, discountCode, directDiscount } = requestData;
+    const { selectedProducts = [], customLineItems = [], currency, shippingMethod, customerId, customer, discountCode, directDiscount } = requestData;
     
     const country = CURRENCY_COUNTRY_MAP[currency];
     if (!country) {
@@ -102,21 +105,23 @@ export async function POST(request: NextRequest) {
       
       shippingAddress: {
         country,
-        firstName: 'Piotr',
-        lastName: 'Bukala',
-        email: 'piotr.bukala@commercetools.com',
-        streetName: 'Default Street',
-        streetNumber: '1',
-        ...addressDetails,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        email: customer.email,
+        streetName: customer.defaultShippingAddress.streetName,
+        streetNumber: customer.defaultShippingAddress.streetNumber,
+        city: customer.defaultShippingAddress.city,
+        state: customer.defaultShippingAddress.state,
+        postalCode: customer.defaultShippingAddress.postalCode
       },
       billingAddress: {
         country,
-        firstName: 'Default',
-        lastName: 'Address',
-        streetName: 'Default Street',
-        email: 'piotr.bukala@commercetools.com',
-        streetNumber: '1',
-        ...addressDetails,
+        email: customer.email,
+        streetName: customer.defaultShippingAddress.streetName,
+        streetNumber: customer.defaultShippingAddress.streetNumber,
+        city: customer.defaultShippingAddress.city,
+        state: customer.defaultShippingAddress.state,
+        postalCode: customer.defaultShippingAddress.postalCode
       },
       ...(shippingMethod && {
         shippingMethod: {
@@ -138,7 +143,7 @@ export async function POST(request: NextRequest) {
     };
 
     try { 
-    const response = await createApiRoot()
+    let response = await createApiRoot()
       .carts()
       .post({
         body: cartDraft
@@ -177,10 +182,41 @@ export async function POST(request: NextRequest) {
           }
         })
         .execute();
+
+        response = updatedCartResponse;
       }
 
     const linkUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/links/${linkId}`;
     console.log('Generated QR Code URL:', qrCodeUrl);
+       // After successful cart creation, publish event
+    const eventData: LinkCreatedEvent = {
+      linkId,
+      cartId: response.body.id,
+      createdAt: new Date().toISOString(),
+      customerId: response.body.customerId,
+      customerEmail: response.body.shippingAddress?.email,
+      currency: response.body.totalPrice.currencyCode,
+      country: response.body.country || '',
+      totalAmount: response.body.totalPrice.centAmount,
+      products: response.body.lineItems.map(item => ({
+        id: item.productId,
+        quantity: item.quantity,
+        price: item.price.value.centAmount
+      })),
+      discountCode: response.body.discountCodes?.[0]?.discountCode?.id,
+      directDiscount: response.body.directDiscounts?.[0] ? {
+        type: response.body.directDiscounts[0].value.type === 'relative' ? 'relative' : 'absolute',
+        value: response.body.directDiscounts[0].value.type === 'relative' 
+          ? response.body.directDiscounts[0].value.permyriad / 100 
+          : (response.body.directDiscounts[0].value.type === 'absolute' 
+              ? response.body.directDiscounts[0].value.money[0].centAmount / 100
+              : 0)
+      } : undefined
+    };
+
+    await publishLinkCreatedEvent(eventData);
+
+
     return NextResponse.json({ 
       linkId: linkId,  
       link: linkUrl, 

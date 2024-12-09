@@ -17,6 +17,8 @@ import { SearchableCombobox } from './SearchableCombobox';
 import { fetchDiscountCodes } from '@/lib/commercetools/fetchers';
 import type { DirectDiscount, SimplifiedDiscountCode } from '../types/commercetools';
 import { DirectDiscountForm } from './DirectDiscountForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 
 interface FormData {
@@ -25,6 +27,7 @@ interface FormData {
   currency: string;
   shippingMethod: string;
   customerId: string;
+  customer?: SimplifiedCustomer;
   discountCode?: string;
   directDiscount? : DirectDiscount
 }
@@ -53,6 +56,12 @@ export const LinkCreator: React.FC = () => {
     currency: '',
     shippingMethod: '',
     customerId: '',
+    customer: {
+      id: '',
+      firstName: '',
+      lastName: '',
+      email: ''
+    },
     discountCode: '',
     directDiscount: undefined,
   });
@@ -107,9 +116,8 @@ export const LinkCreator: React.FC = () => {
 const handleCustomerChange = (customerId: string) => {
   const customer = customers.find(c => c.id === customerId);
   setSelectedCustomer(customer || null);
-  setFormData({...formData, customerId});
+  setFormData({...formData, customerId, customer: customer || undefined});
 };
-
 
 const handleCurrencyChange = (value: string) => {
   setError(''); 
@@ -236,6 +244,7 @@ const handleRemoveDirectDiscount = () => {
     setError('');
 
     try {
+      console.log("Form Data: " + JSON.stringify(formData))
       const response = await fetch('/api/links', {
         method: 'POST',
         headers: {
@@ -527,70 +536,79 @@ formData.shippingMethod &&
             </form>
           </CardContent>
         </Card>
-
-        <Card className="w-full max-w-2xl mx-auto">
+            <div className="flex justify-center mt-4"></div>
+        <Card className="w-full max-w-2xl mx-auto bg-[#F7F2EA]">
   <CardHeader className="bg-[#F7F2EA] border-b border-[#191741]">
     <CardTitle className="text-2xl font-bold text-[#191741]">Instructions & Roadmap</CardTitle>
   </CardHeader>
   <CardContent className="space-y-4 pt-6">
-    <div className="space-y-6">
-      {/* Basic Instructions */}
-      <div>
-        <h3 className="font-semibold text-[#191741] mb-2">Basic Usage</h3>
+    <Tabs defaultValue="basic" className="w-full">
+    <TabsList className="grid w-full grid-cols-5 bg-[#F7F2EA] border border-[#191741]">
+  <TabsTrigger 
+    value="basic" 
+    className="data-[state=active]:bg-[#8F8FFF] data-[state=active]:text-[#191741] text-[#191741] hover:bg-[#6359ff] hover:text-white"
+  > Basic Usage
+  </TabsTrigger>
+        <TabsTrigger value="discounts" className="data-[state=active]:bg-[#8F8FFF] data-[state=active]:text-[#191741] text-[#191741] hover:bg-[#6359ff] hover:text-white"
+        >Discounts</TabsTrigger>
+        <TabsTrigger value="custom" className="data-[state=active]:bg-[#8F8FFF] data-[state=active]:text-[#191741] text-[#191741] hover:bg-[#6359ff] hover:text-white"
+        >Custom Items</TabsTrigger>
+        <TabsTrigger value="links" className="data-[state=active]:bg-[#8F8FFF] data-[state=active]:text-[#191741] text-[#191741] hover:bg-[#6359ff] hover:text-white"
+        >Links</TabsTrigger>
+        <TabsTrigger value="roadmap" className="data-[state=active]:bg-[#8F8FFF] data-[state=active]:text-[#191741] text-[#191741] hover:bg-[#6359ff] hover:text-white"
+        >Roadmap</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="basic" className="mt-4">
         <ul className="list-disc pl-5 space-y-2 text-[#191741]">
           <li>Select a currency first - this will determine the country for the cart</li>
           <li>Add products from the dropdown - you can add multiple products</li>
           <li>Set shipping method to specify delivery options</li>
           <li>Optionally assign a customer to pre-fill shipping details</li>
         </ul>
-      </div>
+      </TabsContent>
 
-      {/* Discount Instructions */}
-      <div>
-        <h3 className="font-semibold text-[#191741] mb-2">Applying Discounts</h3>
+      <TabsContent value="discounts" className="mt-4">
         <ul className="list-disc pl-5 space-y-2 text-[#191741]">
           <li>Use discount codes for predefined promotions</li>
           <li>Apply direct discounts as either percentage or fixed amount</li>
           <li>You can combine both discount types</li>
         </ul>
-      </div>
+      </TabsContent>
 
-      {/* Custom Items */}
-      <div>
-        <h3 className="font-semibold text-[#191741] mb-2">Custom Line Items</h3>
+      <TabsContent value="custom" className="mt-4">
         <ul className="list-disc pl-5 space-y-2 text-[#191741]">
           <li>Add custom items for special products or services</li>
           <li>Set custom prices in the selected currency</li>
           <li>Manage quantities as needed</li>
         </ul>
-      </div>
+      </TabsContent>
 
-      {/* Generated Link Usage */}
-      <div>
-        <h3 className="font-semibold text-[#191741] mb-2">Using Generated Links</h3>
+      <TabsContent value="links" className="mt-4">
         <ul className="list-disc pl-5 space-y-2 text-[#191741]">
           <li>Copy the generated link or use the QR code</li>
           <li>Share with customers via email or messaging</li>
           <li>Links will load pre-configured carts with all selections</li>
           <li>Customers can proceed directly to checkout</li>
         </ul>
-      </div>
-      <div>
-        <h2 className="font-semibold text-[#191741] mb-2">Roadmap</h2>
+      </TabsContent>
+
+      <TabsContent value="roadmap" className="mt-4">
         <ul className="list-disc pl-5 space-y-2 text-[#191741]">
           <li>Leverage AI to suggest few potential carts configuration for customer based on previous order history or interest e.g. Braze/Algolia</li>
           <li>Add send email button to sent email with cart/checkout link using Braze</li>
         </ul>
-      </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   </CardContent>
 </Card>
+
       </div>
 
       
 
       {/* Cart Preview and Custom Line Items */}
-      <div className="space-y-6">
+      <div className="space-y-6 px-6">
         <CartPreview
           products={formData.selectedProducts}
           customLineItems={formData.customLineItems}

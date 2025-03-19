@@ -318,7 +318,6 @@ export const Dashboard: React.FC = () => {
   </CardContent>
 </Card>
 <div className="mt-8"></div>
-
       <Card className="border border-[#191741]">
         <CardHeader className="bg-[#F7F2EA] pt-6">
           <CardTitle className="text-lg text-[#191741]">Recent Cart History</CardTitle>
@@ -352,7 +351,11 @@ export const Dashboard: React.FC = () => {
                     <td className="p-3 font-medium">
                       {cart.customerEmail }
                     </td>
-                    <td className="p-3">{cart.hoursAge}h ago</td>
+                    <td className="p-3">
+                      {cart.hoursAge >= 24 
+                        ? `${Math.floor(cart.hoursAge / 24)} days` 
+                        : `${cart.hoursAge}h`}
+                    </td>
                     <td className="p-3 font-medium">
                       {cart.cartValue > 0 ? formatCurrency(cart.cartValue) : 'N/A'}
                     </td>

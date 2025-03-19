@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         ON l.linkId = o.linkId
         GROUP BY date
         ORDER BY date DESC
-        LIMIT 30
+        LIMIT 50
       )
       SELECT * FROM daily_metrics ORDER BY date ASC
     `;
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       UNNEST(products) as p
       GROUP BY p.name
       ORDER BY order_count DESC
-      LIMIT 10
+      LIMIT 20
     `;
 
     // Cart Conversion Flow Query
